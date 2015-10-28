@@ -30,7 +30,7 @@ struct blockInfo
 };
 struct fileInfo
 {
-    int type;				//文件类型
+    int type;				//文件类型,1表示index，0表示数据
     string fileName;		//文件名
     int FileBlockNum;		//文件有的块数
     // int recordAmount;
@@ -47,6 +47,7 @@ private:
 	static int fileCount;			//文件数
 	static blockInfo *BlockHandle; 	//垃圾链表
 	static fileInfo *FileHandle; 	//文件链表
+    void addTime(string DB_Name);
 	blockInfo *findBlock(string DB_Name);
 	void replce(fileInfo *m_fileInfo,blockInfo *m_blockInfo);
 	fileInfo *get_file_info(string DB_Name,string File_Name,int m_fileType);
@@ -59,7 +60,7 @@ public:
 	BufferManager(){blockCount=0;fileCount=0;BlockHandle=NULL;FileHandle=NULL;};
 	~BufferManager(){if(fileCount!=0) cout<<"DB not closed yet! Bad manner!"<<endl;};
 
-	static blockInfo * get_file_block(string DB_Name,string Table_Name,int fileType,int blockNum);//根据数据库名、文件名、文件类型、块号找到该块在内存中的位置。
+	static blockInfo * get_file_block(string DB_Name,string Table_Name,int fileType,int blockNum);//根据数据库名、文件名、文件类型、块号找到该块在内存中的位置。1表示index，0表示data
 	static void quitProg(string DB_Name);//根据数据库名，关闭打开的所有文件，并且释放所有块
 	static void DeleteFile(string DB_Name, string FileName);//根据数据库名，文件名删除文件
 	static void CreateFile(string DB_Name,string File_Name);//根据数据库名，文件名创建文件
@@ -69,7 +70,5 @@ public:
     //static Write_Index_Info(string DB_Name,string File_Name,int &recordAmount,int &recordLength);
 
 };
-
-
 
 #endif /* defined(__DBMSSev__BufferManager__) */
