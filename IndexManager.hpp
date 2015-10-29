@@ -45,16 +45,34 @@ private:
     int rootBlock;
     int attributeLen;
     short maxNode;
+    enum Value::AttributeType type;
     
-    void writeIndexFileHeader(int blockNumber, int rootNumber, int attributeLen, short maxNode);
+    // Read/Write Data
     void readIndexFileHeader(char *block);
-    BLOCKHEADER readBlockHeader(char *block);
+    void writeIndexFileHeader(string DBName, string tableName, string indexName, int blockNumber, int rootNumber, int attributeLen, short maxNode, byte attributeType);
+    BLOCKHEADER *readBlockHeader(char *block);
+    void writeBlockHeader(string DBName, string tableName, string indexName, int blockNo, byte isLeaf, int father, int left, short nodeNumber);
     byte readByte(byte *block, int &fp);
+    void writeByte(byte byteData, byte *block, int &fp);
     short readShort(byte *block, int &fp);
+    void writeShort(short shortData, byte *block, int &fp);
     int readInt(byte *block, int &fp);
+    void writeInt(int intData, byte *block, int &fp);
     float readFloat(byte *block, int &fp);
+    void writeFloat(float floatData, byte *block, int &fp);
     string readString(byte *block, int &fp, int length);
+    void writeString(string stringData, byte *block, int &fp, int length);
+    
+    // Insertion
+    int insertIntoLeafWithoutSplit(byte *block, Value attributeValue, int recordOffset);
+    int insertIntoLeafWithSplit(byte *block, Value attributeValue, int recordOffset);
+    int insertIntoInternalWithoutSplit(byte *block, Value indexValue, int indexOffset);
+    int insertIntoInternalWithSplit(byte *block, Value indexValue, int indexOffset);
+    int insertIntoParent(int left, int right, Value indexValue);
+    int insertIntoRoot(int left, int right, Value rootValue);
+    
     blockInfo *searchInTree(string DBName, string tableName, string indexName, int rootNo, Value attributeValue);
+    void copyNodes(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
 public:
     int create(string DBName, string tableName, string indexName, int attributeBytes, vector<Value> attributeValues, vector<int> recordOffsets);
     int insertInto(string DBName, string tableName, string indexName, Value attributeValue, int recordOffset);

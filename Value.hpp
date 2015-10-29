@@ -16,7 +16,7 @@ using namespace std;
 class Value {
 public:
     enum AttributeType {
-        INT,
+        INT = 1,
         FLOAT,
         STRING
     } type;
