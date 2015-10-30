@@ -31,7 +31,12 @@ public:
     void setInt(int intValue);
     void setFloat(float floatValue);
     void setString(string stringValue);
+    bool isEqualTo(Value value);
+    bool isNotEqualTo(Value value);
     bool isLessThan(Value value);
+    bool isLessEqualTo(Value value);
+    bool isGreatThan(Value value);
+    bool isGreatEqualTo(Value value);
 };
 
 #endif /* Value_hpp */

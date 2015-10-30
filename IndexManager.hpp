@@ -41,17 +41,20 @@ typedef enum {
 
 class IndexManager {
 private:
-    int blockNumber;
+    int blockNumber;                        // k blocks + 1 indexFileHeader
     int rootBlock;
     int attributeLen;
-    short maxNode;
+    short maxNode;                          // even
     enum Value::AttributeType type;
+    string currentDB;
+    string currentTable;
+    string currentIndex;
     
     // Read/Write Data
-    void readIndexFileHeader(char *block);
-    void writeIndexFileHeader(string DBName, string tableName, string indexName, int blockNumber, int rootNumber, int attributeLen, short maxNode, byte attributeType);
-    BLOCKHEADER *readBlockHeader(char *block);
-    void writeBlockHeader(string DBName, string tableName, string indexName, int blockNo, byte isLeaf, int father, int left, short nodeNumber);
+    void readIndexFileHeader(byte *block);
+    void writeIndexFileHeader(int blockNumber, int rootNumber, int attributeLen, short maxNode, byte attributeType);
+    BLOCKHEADER *readBlockHeader(byte *block);
+    void writeBlockHeader(int blockNo, byte isLeaf, int father, int left, short nodeNumber);
     byte readByte(byte *block, int &fp);
     void writeByte(byte byteData, byte *block, int &fp);
     short readShort(byte *block, int &fp);
@@ -62,22 +65,31 @@ private:
     void writeFloat(float floatData, byte *block, int &fp);
     string readString(byte *block, int &fp, int length);
     void writeString(string stringData, byte *block, int &fp, int length);
+    Value readValue(byte *block, int &fp);
+    void writeValue(Value value, byte *block, int &fp);
     
     // Insertion
-    int insertIntoLeafWithoutSplit(byte *block, Value attributeValue, int recordOffset);
-    int insertIntoLeafWithSplit(byte *block, Value attributeValue, int recordOffset);
-    int insertIntoInternalWithoutSplit(byte *block, Value indexValue, int indexOffset);
-    int insertIntoInternalWithSplit(byte *block, Value indexValue, int indexOffset);
-    int insertIntoParent(int left, int right, Value indexValue);
-    int insertIntoRoot(int left, int right, Value rootValue);
+    void insertIntoLeafWithoutSplit(BLOCKHEADER *leafHeader, blockInfo *block, Value attributeValue, int recordOffset);
+    void insertIntoLeafWithSplit(BLOCKHEADER *leafHeader, blockInfo *block, Value attributeValue, int recordOffset);
+    void insertIntoInternalWithoutSplit(BLOCKHEADER *internalHeader, blockInfo *block, Value indexValue, int indexOffset);
+    void insertIntoInternalWithSplit(BLOCKHEADER *internalHeader, blockInfo *block, Value indexValue, int indexOffset);
+    void insertIntoParent(blockInfo *block, Value indexValue);
+    void insertIntoRoot(blockInfo *block, Value rootValue);
     
-    blockInfo *searchInTree(string DBName, string tableName, string indexName, int rootNo, Value attributeValue);
+    // Deleteion
+    int coalesce(int neighbor);
+    int redistribute(int neighbor);
+    
+    blockInfo *searchInTree(int rootNo, Value attributeValue);
+    short findPisition(byte *block, Value benchmark);
     void copyNodes(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
+    void addNodeWithPointerFirst(byte *block, int pos, short n, Value value, int ptr);
+    void addNodeWithValueFirst(byte *block, int pos, short n, Value value, int ptr);
 public:
     int create(string DBName, string tableName, string indexName, int attributeBytes, vector<Value> attributeValues, vector<int> recordOffsets);
     int insertInto(string DBName, string tableName, string indexName, Value attributeValue, int recordOffset);
     int deleteFrom(string DBName, string tableName, string indexName, Value attributeValue);
-    int select(string DBName, string tableName, string indexName, Value attributeValue, Condition cond, vector<char> &results);
+    int select(string DBName, string tableName, string indexName, Value attributeValue, Condition cond, vector<int> &results);
     int drop(string DBName, string tableName, string indexName);
 };
 
