@@ -1,19 +1,19 @@
-BufferManager 接口：
-1.blockInfo * get_file_block(string DB_Name,string Table_Name,int fileType,int blockNum)
-根据数据库名、文件名、文件类型、块号找到该块在内存中的位置。
-2.void quitProg(string DB_Name)
-根据数据库名，关闭打开的所有文件，并且释放所有块
-3.void DeleteFile(string DB_Name, string FileName)
-根据数据库名，文件名删除文件
-4.void CreateFile(string DB_Name,string File_Name)
-根据数据库名，文件名创建文件
-5.bool HasFile(string DB_Name, string FIle_Name)
-根据数据库名，文件名判断该文件是否存在
-6.getBlockNum(string DB_Name, string File_name)
-获得改文件的块数
+//根据数据库名、文件名、文件类型、块号找到该块在内存中的位置。1表示index，0表示data
+1.	static blockInfo * get_file_block(string DB_Name,string Table_Name,int fileType,int blockNum);
+    //根据数据库名，关闭打开的所有文件，并且释放所有块
+2.	static void quitProg(string DB_Name);
+    //根据数据库名，文件名删除文件,type=1表示index，0表示data
+3.	static void DeleteFile(string DB_Name, string FileName,int type);
+    //根据数据库名，文件名创建文件,type=1表示index，0表示data
+4/    static void CreateFile(string DB_Name,string File_Name,int type);
+    //根据数据库名，文件名判断该文件是否存在,type=1表示index，0表示data
+5.    static bool HasFile(string DB_Name, string File_Name,int type);
+    //获得该文件的块数，,type=1表示index，0表示data，计数规则从0开始
+6.    static int getBlockNum(string DB_Name,string File_Name,int type);
+    //运行use DataBase 时使用，创建相应文件夹以及目录
+7.    static void UseDB(string DB_Name);
 
 API模块需要定义一次BufferManager,之后各个模块都可以直接调用上面的接口函数，通过该类的静态函数。
 recordManager可以通过block指针直接修改block的内容，以及脏位（dirty bit）
 使用该块时需要设定block->lock=1,用完时设定block->lock=0
-
-
+写块时可以写charNum来记录这个块的使用情况，不写也不会影响BufferManager
