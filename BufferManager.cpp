@@ -7,6 +7,11 @@
 //
 
 #include "BufferManager.h"
+//initialization the member variable
+int BufferManager::blockCount=0;
+int BufferManager::fileCount=0;
+fileInfo* BufferManager::FileHandle=NULL;
+blockInfo* BufferManager::BlockHandle=NULL;
 void BufferManager::addTime(string DB_Name) //遍历文件块，将其itime++
 {
     blockInfo *block;
@@ -109,7 +114,7 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
             filePath=DB_Name+"\\data\\"+File_Name;
         else
             filePath=DB_Name+"\\index\\"+File_Name;
-        file->fp.open(filePath,ios::binary);
+        file->fp.open(filePath.c_str(),ios::binary);
         if (!file->fp.is_open()) {//文件打开失败
             cout<<"in BufferManager::get_file_info,文件打开失败"<<endl;
             exit(0);
@@ -150,7 +155,7 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
         filePath=DB_Name+"\\data\\"+File_Name;
     else
         filePath=DB_Name+"\\index\\"+File_Name;
-    file->fp.open(filePath,ios::binary);
+    file->fp.open(filePath.c_str(),ios::binary);
     if (!file->fp.is_open()) {//文件打开失败
         cout<<"in BufferManager::get_file_info,文件打开失败"<<endl;
         exit(0);
@@ -208,13 +213,12 @@ blockInfo* BufferManager::readBlock(string DB_Name,fileInfo* file, int blockNum)
     block->blockNum=blockNum;
     block->charNum=BLOCK_LEN;
 
-    fstream fp=file->fp;
-    if (!fp.is_open()){//文件无法打开
+    if (!file->fp.is_open()){//文件无法打开
         cout<<"in BufferManager::readBlock,文件无法打开";
         exit(0);
     }
-    fp.seekg(BLOCK_LEN*blockNum);//调整读指针OFFSET
-    fp.read(block->cBlock, BLOCK_LEN);//读磁盘中的块内值
+    file->fp.seekg(BLOCK_LEN*blockNum);//调整读指针OFFSET
+    file->fp.read(block->cBlock, BLOCK_LEN);//读磁盘中的块内值
     blockInfo* bp;//工作指针
     //将该块链接到该文件头下
     bp=file->firstBlock;
@@ -307,7 +311,7 @@ void BufferManager::CreateFile(string DB_Name, string File_Name,int type)
     else
         filePath=DB_Name+"\\index\\"+File_Name;
     
-    fp.open(filePath,ios::binary);
+    fp.open(filePath.c_str(),ios::binary);
     if (!fp.is_open()) {//文件打开失败
         cout<<"in BufferManager::CreateFile,文件创建失败"<<endl;
         exit(0);
