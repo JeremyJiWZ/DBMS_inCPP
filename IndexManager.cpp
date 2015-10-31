@@ -10,11 +10,13 @@
 //  Nodes in blocks are called nodes. Count starts from 1.
 //  Total number of XXX is called XXXNumber.
 //  Ordinal of XXX is called XXXNo.
+//  Index file header is in No.0 block
 
 #include "IndexManager.hpp"
 
 #define SUCCESS 1
 #define FAIL 0
+#warning dirty bit
 
 int IndexManager::create(string DBName, string tableName, string indexName, int attributeBytes, vector<Value> attributeValues, vector<int> recordOffsets) {
     int blockNumber = 1;

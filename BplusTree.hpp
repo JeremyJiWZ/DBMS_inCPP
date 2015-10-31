@@ -21,6 +21,7 @@ using namespace std;
 typedef unsigned char byte;
 
 typedef struct {
+#warning check
     byte isLeaf;
     int father;
     int left;
@@ -60,12 +61,16 @@ private:
     void insertIntoRoot(blockInfo *block, Value rootValue);
     
     // Deleteion
-    int coalesce(int neighbor);
-    int redistribute(int neighbor);
+    void deleteNode(blockInfo *block, Value value);
+    void coalesce(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock);
+    void redistribute(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock);
+    void adjustRoot(BLOCKHEADER *blockHeader, blockInfo *block);
     
+    // Utility
     blockInfo *searchInTree(int rootNo, Value attributeValue);
     short findPisition(byte *block, Value benchmark);
-    void copyNodes(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
+    void copyNodesWithPointerFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
+    void copyNodesWithValueFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void addNodeWithPointerFirst(byte *block, int pos, short n, Value value, int ptr);
     void addNodeWithValueFirst(byte *block, int pos, short n, Value value, int ptr);
     Value readValue(byte *block, int &fp);
