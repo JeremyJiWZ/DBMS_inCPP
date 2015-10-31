@@ -62,13 +62,17 @@ private:
     
     // Deleteion
     void deleteNode(blockInfo *block, Value value);
+    void deleteNode(blockInfo *block, int ptr);
+    void handleTooFewNodes(BLOCKHEADER *blockHeader, blockInfo *block);
     void coalesce(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock);
-    void redistribute(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock);
+    void redistributeFromLeftToRight(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock);
+    void redistributeFromRightToLeft(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock);
     void adjustRoot(BLOCKHEADER *blockHeader, blockInfo *block);
     
     // Utility
     blockInfo *searchInTree(int rootNo, Value attributeValue);
-    short findPisition(byte *block, Value benchmark);
+    short findPosition(byte *block, Value benchmark);
+    short findPosition(byte *block, int ptr);
     void copyNodesWithPointerFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void copyNodesWithValueFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void addNodeWithPointerFirst(byte *block, int pos, short n, Value value, int ptr);
