@@ -16,7 +16,6 @@
 
 #define SUCCESS 1
 #define FAIL 0
-#warning dirty bit
 
 int IndexManager::create(string DBName, string tableName, string indexName, int attributeBytes, vector<Value> attributeValues, vector<int> recordOffsets) {
     int blockNumber = 1;
@@ -67,7 +66,7 @@ int IndexManager::deleteFrom(string DBName, string tableName, string indexName, 
 }
 
 int IndexManager::select(string DBName, string tableName, string indexName, Value attributeValue, Condition cond, vector<int> &results) {
-    tree.select(DBName, tableName, indexName, attributeValue, cond, &results);
+    tree.select(DBName, tableName, indexName, attributeValue, cond, results);
     return SUCCESS;
 }
 

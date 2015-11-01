@@ -202,8 +202,7 @@ void BplusTree::handleTooFewNodes(BLOCKHEADER *blockHeader, blockInfo *block) {
     if (blockHeader->father == 0)
         adjustRoot(blockHeader, block);
     if (blockHeader->nodeNumber>=maxNode/2)
-        exit(1);
-#warning return
+        return;
     int father = blockHeader->father;
     blockInfo *fatherBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, father);
     int neighbor = findRightNeighbor((byte *)fatherBlock->cBlock, block->blockNum);
