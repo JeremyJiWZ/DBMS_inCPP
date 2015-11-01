@@ -1,0 +1,114 @@
+0.
+更为重要的，有需要新增的功能可以写在这里或者用issues（issues可以吧？）
+
+1.
+首先最为重要的，CatalogManager是一个类，要使用任何方法都要通过这个类的全局指针catl，该指针指向一个唯一的对象。
+catl的外部声明已经写在头文件了，直接用就行。
+
+举例：
+catl->CreateDatabase("test"); 将会使用创建数据库的方法
+catl->GetAttrType("test", "attr1", type); 会将type的值修改为该属性的类型（参见3.）
+
+2.返回说明
+任何方法都会返回一个int，该值为错误代码，可以调用GetErrMsg方法获得错误消息，错误代码为0表示正确。
+
+3.属性类型说明（指的是char(255),int,float三种数据库类型）
+可以使用CTG_CHAR等宏定义或CatalogManager::INT等静态常量获得类型的值，实际上INT=0、CHAR=1、FLOAT=2
+
+4.两个结构类型（不使用GetTableStruct方法不用看）
+struct TableHead{
+	char valid;                      //1字节，表是否存在，被删除后为0，新建的表会放在第一个为0的地方
+	char tableName[MAX_NAME_LENGTH]; //64字节，表的名字
+	int attrAmount;                  //4字节，属性的数目
+	int recordAmount;                //4字节，记录的数目
+};
+
+struct TableAttr{
+	char attrName[MAX_NAME_LENGTH];  //64字节，属性的名字
+	char type;                       //1字节，属性的类型
+	int amount;                      //max 255, 4bytes，属性的类型个数，针对char(255)，其余为1
+	char unique;                     //1字节，是否唯一
+	char primary;                    //1字节，是否主键
+	char index;                      //1字节，是否索引
+	char indexName[MAX_NAME_LENGTH]; //64字节，索引的名字
+};
+
+5.方法说明（方法说明必看）（顺序大致按照实用性从前往后排，越后越不实用，头文件中顺序的是同类型的放在一起）
+（有些方法未实现是我觉得没什么用的，需要实现叫我就行）
+
+//创建数据库：创建数据库目录和cat文件，返回0代表创建成功
+int CreateDatabase(const string & DBName);
+
+//删除数据库：删除数据库目录下所有文件，返回0代表删除成功
+int DropDatabase(const string & DBName);
+
+//使用数据库，会打开文件，且修改私有成员mDBNAME
+int UseDatabase(const string & DBName);	
+
+//退出数据库时一定要调用，析构catl实例
+int Quit();
+
+//创建表：在数据库目录下cat文件中添加数据
+int CreateTable(const struct TableHead & tableHead, const struct TableAttr tableAttr[], int attrAmount = 0);
+
+//删除表：删除数据库目录下cat文件相关数据
+int DropTable(const string & tableName);
+
+//以结构的方式获得表的信息，这种方法最彻底，所有信息都可以获得，强烈推荐
+int GetTableStruct(const string & tableName, struct TableHead & tableHead, struct TableAttr tableAttr[]);
+
+//获得某个表属性数量
+int GetAttrAmount(const string & tableName, int & attrAmount);
+
+//创建索引先调用这个方法，判断索引名是否已存在，且修改ctg相关表里的属性信息
+int CreateIndex(const string & tableName, const string & attrName, const string & indexName);
+
+//删除索引，会判断索引名是否存在，且修改ctg相关表里的属性信息
+int DropIndex(const string & indexName);
+
+//判断插入的数据类型是否和表里的匹配，注意不会导致记录的数量改变，若要增加记录数量请使用AddRecordAmount方法
+int Insert(const string & tableName, int amount, int type[]);
+
+//获得某个表记录的数目
+int GetRecordAmount(const string & tableName, int & amount);
+
+//增加了某个表记录的数目，使用这个方法，会修改表记录的数目
+int AddRecordAmount(const string & tableName, int amount = 1);
+
+//减少了某个表记录的数目，使用这个方法，会修改表记录的数目
+int SubRecordAmount(const string & tableName, int amount);
+
+//获得错误代码，实际上每个方法返回值就是这个错误代码
+int GetErrNum();
+
+//通过最近一条操作的错误代码返回错误信息
+string & GetErrMsg();
+
+//通过传递进来的参数错误代码返回错误信息
+string & GetErrMsg(int errNum);
+
+int GetAttrNameWithNum(const string & tableName, int num, string & attrName);//这个函数好像没用
+int IsAttrInTable(const string & tableName, const string & attrName, int & ret);//存在返ret为1，不存在ret为0
+int GetAttrType(const string & tableName, const string & attrName, int & type);//返回的类型保存在type中
+int GetAttrType(const string & tableName, int num, int & type);//返回的类型保存在type中
+int IsAttrType(const string & tableName, const string & attrName, int type, int & ret);//相同返回0，未实现
+int GetAttrByte(const string & tableName, int num, int & bytes);//未实现不要用
+int GetAllAttrByte(const string & tableName, int & bytes);//未实现不要用
+
+int GetIndexAmount(const string & tableName);//未实现不要用
+int DoesAttrHaveIndex(const string & tableName, const string & attrName, int & ret);
+int DoesAttrHaveIndex(const string & tableName, int num, int & ret);
+int GetIndexName(const string & tableName, int num, string & indexName);//返回的index名字结果在indexName中
+int GetIndexName(const string & tableName, const string & attrName, string & indexName);//返回的index名字在indexName中
+int IsIndexInTable(const string & tableName, const string & indexName);
+
+//int Delete(const string & tableName);这个函数好像没用
+//int Select(const string & tableName);同好像没用
+int GetRecordAmount(const string & tableName, int & amount);
+int AddRecordAmount(const string & tableName, int amount = 1);
+int SubRecordAmount(const string & tableName, int amount);
+	
+	
+6.小技巧
+①想给catl换个名字可以自己定义一个CatalogManager类的指针，然后初始化或赋值为CatalogManager::GetInstance()的返回值，通过CatalogManager::GetInstance()可以获得对象的指针。
+②错误代码0是欢迎。

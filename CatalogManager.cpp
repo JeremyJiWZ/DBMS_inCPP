@@ -377,7 +377,27 @@ int CatalogManager::GetTableStruct(const string & tableName, struct TableHead & 
 
 int CatalogManager::CreateIndex(const string & tableName, const string & attrName, const string & indexName)
 {
-	int i;
+	int i, j, tbAmt, num;
+	
+	mFile.seekg(0, ios::beg);
+	mFile.read((char *)&tbAmt, sizeof(int));
+	
+	num = 0;
+	for (i=0; i<tbAmt; i++)
+	{
+		do
+		{
+			GetTable(num);
+			num += 1;
+		}while (mTableHead.valid == 0);
+		
+		for (j=0; j<mTableHead.attrAmount; j++)
+			if (mTableAttr[j].index && (strcmp(mTableAttr[j].indexName, indexName.c_str())==0) )
+			{
+				//index name exists
+				return (mErrNum = 13);
+			}
+	}
 	
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
@@ -593,10 +613,11 @@ const string CatalogManager::mErrMsg[] = {
 	"Table already exists.",    //4
 	"Table does not exist.",    //5
 	"Attribute number larger than amount.",  //6
-	"Attribute does not exist.", //7
+	"Attribute does not exist.",//7
 	"Amount of insertd types does not match.", //8
 	"Insertd type does not match.", //9
 	"That attribute does not have an index.", //10
-	"Attribute already has an index." //11
-	"Index does not exists." //12
+	"Attribute already has an index.", //11
+	"Index does not exists.",    //12
+	"Index name already exists" //13
 };//错误信息，要初始化 
