@@ -21,10 +21,9 @@ using namespace std;
 typedef unsigned char byte;
 
 typedef struct {
-#warning check
     byte isLeaf;
     int father;
-    int left;
+    int left;                               // valid only for leaves
     short nodeNumber;
     byte reserve;
 } BLOCKHEADER;
@@ -73,10 +72,12 @@ private:
     blockInfo *searchInTree(int rootNo, Value attributeValue);
     short findPosition(byte *block, Value benchmark);
     short findPosition(byte *block, int ptr);
+    int findRightNeighbor(byte *block, int ptr);
     void copyNodesWithPointerFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void copyNodesWithValueFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void addNodeWithPointerFirst(byte *block, int pos, short n, Value value, int ptr);
     void addNodeWithValueFirst(byte *block, int pos, short n, Value value, int ptr);
+    void updateFatherPointer(short n, byte *data, int fatherNo);
     Value readValue(byte *block, int &fp);
     void writeValue(Value value, byte *block, int &fp);
 public:
