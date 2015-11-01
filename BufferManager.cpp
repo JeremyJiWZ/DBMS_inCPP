@@ -12,6 +12,7 @@ int BufferManager::blockCount=0;
 int BufferManager::fileCount=0;
 fileInfo* BufferManager::FileHandle=NULL;
 blockInfo* BufferManager::BlockHandle=NULL;
+
 void BufferManager::addTime(string DB_Name) //遍历文件块，将其itime++
 {
     blockInfo *block;
@@ -27,7 +28,6 @@ void BufferManager::addTime(string DB_Name) //遍历文件块，将其itime++
         file=file->Next;
     }
 }
-
 blockInfo* BufferManager::findBlock(string DB_Name)//找到一个空块并将他返回;空块来自：垃圾链表、内存申请、替换块
 {
     //程序将cBlock初始化
@@ -39,7 +39,7 @@ blockInfo* BufferManager::findBlock(string DB_Name)//找到一个空块并将他
     }
     else if(blockCount<BLOCK_MAX){//若内存中块数未达到上限，申请一块并返回
         block=new blockInfo;
-        block->cBlock=new Block;
+        block->cBlock=new char[BLOCK_LEN];
         blockCount++;
         return block;
     }
@@ -96,25 +96,25 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
         file=file->Next;
     }
     //文件链表没有该文件，则重新构建
-    if (fileCount<5) { //直接从内存中申请,初始化，并作为fileHandle的头，返回file
+    if (fileCount<BLOCK_FILE_ACTIVE) { //直接从内存中申请,初始化，并作为fileHandle的头，返回file
         fileCount++; //文件数量++
         file=new fileInfo;
         string filePath;
         //路径名：DB_Name\data\File_Name
         //或者   DB_Name\index\File_Name
         //windows系统下用\\，Linux下用/
-        /*Linux系统
-         if (m_fileType==0)
-         filePath=DB_Name+"/data/"+File_Name;
-         else
-         filePath=DB_Name+"/index/"+File_Name;
-        */
+        //Linux系统
+//         if (m_fileType==0)
+//             filePath=DB_Name+"/data/"+File_Name;
+//         else
+//             filePath=DB_Name+"/index/"+File_Name;
+        
         //windowns 系统
         if (m_fileType==0)
             filePath=DB_Name+"\\data\\"+File_Name;
         else
             filePath=DB_Name+"\\index\\"+File_Name;
-        file->fp.open(filePath.c_str(),ios::binary);
+        file->fp.open(filePath.c_str(),ios::binary|ios::out|ios::in);
         if (!file->fp.is_open()) {//文件打开失败
             cout<<"in BufferManager::get_file_info,文件打开失败"<<endl;
             exit(0);
@@ -144,12 +144,13 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
     //路径名：DB_Name\data\File_Name
     //或者   DB_Name\index\File_Name
     //windows系统下用\\，Linux下用/
-    /*Linux系统
-     if (m_fileType==0)
-     filePath=DB_Name+"/data/"+File_Name;
-     else
-     filePath=DB_Name+"/index/"+File_Name;
-     */
+    
+     //Linux系统
+//    if (m_fileType==0)
+//        filePath=DB_Name+"/data/"+File_Name;
+//    else
+//        filePath=DB_Name+"/index/"+File_Name;
+    
     //windowns 系统
     if (m_fileType==0)
         filePath=DB_Name+"\\data\\"+File_Name;
@@ -171,7 +172,7 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
     FileHandle=file;
     return file;
 }
-void BufferManager::closeFile(string DB_Name, string File_Name, int type)
+void BufferManager::closeFile(string DB_Name, string File_Name, int type)//若文件在内存中，关闭文件；若不在，直接返回
 {
     fileInfo *file;
     blockInfo *block,*bp;
@@ -182,14 +183,20 @@ void BufferManager::closeFile(string DB_Name, string File_Name, int type)
     if (file==NULL) //该文件不在内存中，直接返回
         return;
     block=bp=file->firstBlock;
-    file->fp.close();//关闭文件
-    delete file;//释放文件
+
     //将块扔到垃圾链表中
     while (bp->next!=NULL) {//找到块尾，将其next指向blockHandle，并且重置blockHandle
+        if(bp->dirtyBlock)//假如该块为脏块
+            writeBlock(DB_Name, bp);//写入磁盘
         bp=bp->next;
     }
+    if(bp->dirtyBlock)
+        writeBlock(DB_Name, bp);
     bp->next=BlockHandle;
     BlockHandle=block;
+    
+    file->fp.close();//关闭文件
+    delete file;//释放文件
     return;
 }
 void BufferManager::writeBlock(string DB_Name,blockInfo* block)//将该块写回磁盘，不涉及其他操作
@@ -199,7 +206,7 @@ void BufferManager::writeBlock(string DB_Name,blockInfo* block)//将该块写回
         exit(0);
     }
     block->file->fp.seekp(BLOCK_LEN*block->blockNum);//调整写OFFSET
-    block->file->fp.write(block->cBlock, block->charNum);//写数据到磁盘
+    block->file->fp.write(block->cBlock, BLOCK_LEN);//写数据到磁盘
 }
 blockInfo* BufferManager::readBlock(string DB_Name,fileInfo* file, int blockNum)//将需要的块从文件中读出，文件必须已经打开
 {
@@ -241,13 +248,15 @@ blockInfo* BufferManager::get_file_block(string DB_Name, string File_Name, int f
         file=get_file_info(DB_Name, File_Name, fileType);//得到已经初始化的文件头
         int numOfBlock=file->FileBlockNum;
         //将所要求的块读到内存中
-        if (blockNum<=numOfBlock) {//申请访问的块不超出文件大小
+        if (blockNum<numOfBlock) {//申请访问的块不超出文件大小
             block=readBlock(DB_Name, file, blockNum);//从磁盘中读入此块,且该块已经初始化
+            addTime(DB_Name);
+            block->iTime=0;
             return block;
         }
         else            //申请访问的块在文件大小之外，重新申请一个块
         {
-            file->FileBlockNum=blockNum;//文件变长，块数增加
+            file->FileBlockNum=blockNum+1;//文件变长，块数增加
             block=findBlock(DB_Name);//得到一个块，未初始化
             file->firstBlock=block;
             block->file=file;
@@ -255,8 +264,9 @@ blockInfo* BufferManager::get_file_block(string DB_Name, string File_Name, int f
             block->dirtyBlock=0;
             block->next=NULL;
             block->charNum=0;
-            block->iTime=0;
             block->lock=0;
+            addTime(DB_Name);
+            block->iTime=0;
             return block;
         }
     }
@@ -266,17 +276,22 @@ blockInfo* BufferManager::get_file_block(string DB_Name, string File_Name, int f
         block=file->firstBlock;
         while (block!=NULL) {
             if(block->blockNum==blockNum)//找到了所要求找的块
+            {
+                addTime(DB_Name);
                 return block;//直接返回
+            }
             block=block->next;
         }
         //没有找到该块，不在内存中，则要重新构建一个块
-        if (blockNum<=file->FileBlockNum) {    //申请的块号在文件大小范围之内
+        if (blockNum<file->FileBlockNum) {    //申请的块号在文件大小范围之内
             block=readBlock(DB_Name, file, blockNum);//从磁盘中读入此块,且该块已经初始化
+            addTime(DB_Name);
+            block->iTime=0;
             return block;
         }
         else
         {
-            file->FileBlockNum=blockNum;//文件变长，块数增加
+            file->FileBlockNum=blockNum+1;//文件变长，块数增加
             block=findBlock(DB_Name);//得到一个块，未初始化
             block->next=file->firstBlock;//将该块置入文件链表
             file->firstBlock=block;
@@ -284,8 +299,9 @@ blockInfo* BufferManager::get_file_block(string DB_Name, string File_Name, int f
             block->blockNum=blockNum;
             block->dirtyBlock=0;
             block->charNum=0;
-            block->iTime=0;
             block->lock=0;
+            addTime(DB_Name);
+            block->iTime=0;
             return block;
         }
     }
@@ -298,12 +314,12 @@ void BufferManager::CreateFile(string DB_Name, string File_Name,int type)
     //或者   DB_Name\index\File_Name
     //windows系统下用\\，Linux下用/
     
-    /*Linux系统
-     if (type==0)
-        filePath=DB_Name+"/data/"+File_Name;
-     else
-        filePath=DB_Name+"/index/"+File_Name;
-     */
+    //Linux系统
+//     if (type==0)
+//        filePath=DB_Name+"/data/"+File_Name;
+//     else
+//        filePath=DB_Name+"/index/"+File_Name;
+    
     
     //windowns 系统
     if (type==0)
@@ -311,29 +327,32 @@ void BufferManager::CreateFile(string DB_Name, string File_Name,int type)
     else
         filePath=DB_Name+"\\index\\"+File_Name;
     
-    fp.open(filePath.c_str(),ios::binary);
+    fp.open(filePath.c_str(),ios::binary|ofstream::out);
     if (!fp.is_open()) {//文件打开失败
         cout<<"in BufferManager::CreateFile,文件创建失败"<<endl;
         exit(0);
     }
+    fp.close();
 }
 void BufferManager::DeleteFile(string DB_Name, string File_Name,int type)
 {
-    system("md ");
+    //检查文件是否在内存中，若是，先关闭文件
+    closeFile(DB_Name, File_Name, type);
+    
     string filePath;
     //路径名：DB_Name\data\File_Name
     //或者   DB_Name\index\File_Name
     //windows系统下用\\，Linux下用/
     
     //Linux系统
-    /*
-     if (type==0)
-        filePath=DB_Name+"/data/"+File_Name;
-     else
-        filePath=DB_Name+"/index/"+File_Name;
-     string fileCommand="rm "+filePath;
-     system(fileCommand.c_str());
-     */
+    
+//     if (type==0)
+//        filePath=DB_Name+"/data/"+File_Name;
+//     else
+//        filePath=DB_Name+"/index/"+File_Name;
+//     string fileCommand="rm "+filePath;
+//     system(fileCommand.c_str());
+    
     //windowns 系统
     if (type==0)
         filePath=DB_Name+"\\data\\"+File_Name;
@@ -361,6 +380,7 @@ void BufferManager::quitProg(string DB_Name)
     while (block!=NULL) {
         blockWork=block;
         block=block->next;
+        delete[] blockWork->cBlock;
         delete blockWork;
     }
 }
@@ -382,26 +402,24 @@ bool BufferManager::HasFile(string DB_Name, string File_Name, int type)
     //windows系统下用\\，Linux下用/
     
     //Linux系统
-    /*
-     if (type==0)
-     filePath=DB_Name+"/data/"+File_Name;
-     else
-     filePath=DB_Name+"/index/"+File_Name;
-     string fileCommand="rm "+filePath;
-     system(fileCommand.c_str());
-     */
+    
+//     if (type==0)
+//         filePath=DB_Name+"/data/"+File_Name;
+//     else
+//         filePath=DB_Name+"/index/"+File_Name;
+    
     //windowns 系统
     if (type==0)
         filePath=DB_Name+"\\data\\"+File_Name;
     else
         filePath=DB_Name+"\\index\\"+File_Name;
+    
     fp.open(filePath.c_str(),ios::in);
     if (!fp) //文件没被打开
         return false;
     else    //文件被打开
-        return true;
-    
-    
+        fp.close();
+    return true;
 }
 int BufferManager::getBlockNum(string DB_Name, string File_Name, int type)
 {
@@ -420,19 +438,18 @@ int BufferManager::getBlockNum(string DB_Name, string File_Name, int type)
     //windows系统下用\\，Linux下用/
     
     //Linux系统
-    /*
-     if (type==0)
-     filePath=DB_Name+"/data/"+File_Name;
-     else
-     filePath=DB_Name+"/index/"+File_Name;
-     string fileCommand="rm "+filePath;
-     system(fileCommand.c_str());
-     */
+    
+//     if (type==0)
+//         filePath=DB_Name+"/data/"+File_Name;
+//     else
+//         filePath=DB_Name+"/index/"+File_Name;
+    
     //windowns 系统
     if (type==0)
         filePath=DB_Name+"\\data\\"+File_Name;
     else
         filePath=DB_Name+"\\index\\"+File_Name;
+    
     fp.open(filePath.c_str(),ios::in);
     if (!fp) //文件没被打开
     {
@@ -446,17 +463,19 @@ int BufferManager::getBlockNum(string DB_Name, string File_Name, int type)
         fp.close();//文件关闭
         return numOfBlock;
     }
-
 }
 void BufferManager::UseDB(string DB_Name)//创建路径，三个目录
 {
     //Linux系统
-    /*
-     string commandMD="mkdir "+DB_Name;
-     string commandMD1="mkdir "+DB_Name+"/data";
-     string commandMD2="mkdir "+DB_Name+"/index";
-     system(...);
-    */
+    
+//     string commandMD="mkdir "+DB_Name;
+//     string commandMD1="mkdir "+DB_Name+"/data";
+//     string commandMD2="mkdir "+DB_Name+"/index";
+//     system("pwd");
+//     system(commandMD.c_str());
+//     system(commandMD1.c_str());
+//     system(commandMD2.c_str());
+    
     
     //windows系统
     string commandMD="md "+DB_Name;
@@ -466,10 +485,4 @@ void BufferManager::UseDB(string DB_Name)//创建路径，三个目录
     system(commandMD1.c_str());
     system(commandMD2.c_str());
 }
-
-
-
-
-
-
 
