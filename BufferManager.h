@@ -41,7 +41,7 @@ struct fileInfo
     bool busy; 				//表示改文件中是否有块正在使用(locked)
     fileInfo *Next; 		//下一个文件
     blockInfo *firstBlock;	//第一个块
-};
+}; 
 class BufferManager
 {
 private:
