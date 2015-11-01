@@ -44,6 +44,7 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
     blockInfo *root = BufferManager::get_file_block(DBName, tableName, INDEXFILE, 1);
     int fp = sizeof(BLOCKHEADER);
     DataTransfer::writeInt(0, (byte *)root->cBlock, fp);
+    root->dirtyBlock = true;
     
     vector<Value>::iterator valueItor = attributeValues.begin();
     vector<int>::iterator offsetItor = recordOffsets.begin();
