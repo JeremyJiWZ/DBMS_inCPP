@@ -7,3 +7,87 @@
 //
 
 #include "Value.hpp"
+
+Value::Value() {
+}
+
+Value::Value(int _intValue) {
+    type = INT;
+    intValue = _intValue;
+}
+
+Value::Value(float _floatValue) {
+    type = FLOAT;
+    floatValue = _floatValue;
+}
+
+Value::Value(string _stringValue) {
+    type = STRING;
+    stringValue = _stringValue;
+}
+
+void Value::setInt(int _intValue) {
+    intValue = _intValue;
+}
+
+void Value::setFloat(float _floatValue) {
+    floatValue = _floatValue;
+}
+
+void Value::setString(string _stringValue){
+    stringValue = _stringValue;
+}
+
+bool Value::isEqualTo(Value value) {
+    switch (type) {
+        case INT:
+            return (intValue == value.intValue);
+            break;
+        case FLOAT:
+            return (floatValue == value.floatValue);
+            break;
+        case STRING:
+            return (stringValue == value.stringValue);
+            break;
+    }
+}
+
+bool Value::isNotEqualTo(Value value) {
+    return !isEqualTo(value);
+}
+
+bool Value::isLessThan(Value value) {
+    switch (type) {
+        case INT:
+            return (intValue<value.intValue);
+            break;
+        case FLOAT:
+            return (floatValue<value.floatValue);
+            break;
+        case STRING:
+            return (stringValue<value.stringValue);
+            break;
+    }
+}
+
+bool Value::isGreatThan(Value value) {
+    switch (type) {
+        case INT:
+            return (intValue>value.intValue);
+            break;
+        case FLOAT:
+            return (floatValue>value.floatValue);
+            break;
+        case STRING:
+            return (stringValue>value.stringValue);
+            break;
+    }
+}
+
+bool Value::isLessEqualTo(Value value) {
+    return !isGreatThan(value);
+}
+
+bool Value::isGreatEqualTo(Value value) {
+    return !isLessThan(value);
+}
