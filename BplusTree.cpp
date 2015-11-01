@@ -6,6 +6,7 @@
 //  Copyright © 2015年 Sylvanus. All rights reserved.
 //
 
+#include <iostream>
 #include "BplusTree.hpp"
 
 #define SUCCESS 1
@@ -601,5 +602,56 @@ void BplusTree::writeValue(Value value, byte *block, int &fp) {
             break;
         default:
             break;
+    }
+}
+
+void BplusTree::printValue(byte *block, int &fp) {
+    switch (type) {
+        case Value::INT:
+            cout<<DataTransfer::readInt(block, fp);
+            break;
+        case Value::FLOAT:
+            cout<<DataTransfer::readFloat(block, fp);
+            break;
+        case Value::STRING:
+            cout<<DataTransfer::readString(block, fp, attributeLen);
+            break;
+    }
+}
+
+void BplusTree::printTree() {
+    blockInfo *block = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, 0);
+    readIndexFileHeader((byte *)block->cBlock);
+    vector<int> queue;
+    queue.push_back(rootBlock);
+    int re = 1;
+    int s = 0;
+    vector<int>::iterator itor = queue.begin();
+    while (itor != queue.end()) {
+        block = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, *itor);
+        BLOCKHEADER *blockHeader;
+        cout<<"("<<blockHeader->isLeaf<<", "<<blockHeader->father<<", "<<blockHeader->left<<", "<<blockHeader->nodeNumber<<")[";
+        int fp = sizeof(BLOCKHEADER);
+        for (int i=0; i<blockHeader->nodeNumber; i++) {
+            int ptr = DataTransfer::readInt((byte *)block->cBlock, fp);
+            cout<<ptr<<":";
+            s++;
+            if (!blockHeader->isLeaf)
+                queue.push_back(ptr);
+            printValue((byte *)block->cBlock, fp);
+            cout<<":";
+        }
+        int ptr = DataTransfer::readInt((byte *)block->cBlock, fp);
+        cout<<ptr<<"]";
+        s++;
+        if (!blockHeader->isLeaf)
+            queue.push_back(ptr);
+        re--;
+        if (re == 0) {
+            cout<<endl;
+            re = s;
+            s = 0;
+        }
+        itor++;
     }
 }
