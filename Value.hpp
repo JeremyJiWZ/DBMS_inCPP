@@ -1,4 +1,4 @@
-//
+﻿//
 //  Value.hpp
 //  DBMS
 //
@@ -23,11 +23,12 @@ public:
     int intValue;
     float floatValue;
     string stringValue;
+    string ValueName;
 
     Value();
-    Value(int intValue);
-    Value(float floatValue);
-    Value(string stringValue);
+    Value(int intValue,string ValueName=NULL);
+    Value(float floatValue,string ValueName=NULL);
+    Value(string stringValue,string ValueName=NULL);
     void setInt(int intValue);
     void setFloat(float floatValue);
     void setString(string stringValue);
