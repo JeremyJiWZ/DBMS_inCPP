@@ -104,23 +104,28 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
         //或者   DB_Name\index\File_Name
         //windows系统下用\\，Linux下用/
         //Linux系统
-//         if (m_fileType==0)
-//             filePath=DB_Name+"/data/"+File_Name;
-//         else
-//             filePath=DB_Name+"/index/"+File_Name;
+#ifdef linux
+         if (m_fileType==0)
+             filePath=DB_Name+"/data/"+File_Name;
+         else
+             filePath=DB_Name+"/index/"+File_Name;
+#endif
         
         //windowns 系统
+#ifndef linux
         if (m_fileType==0)
             filePath=DB_Name+"\\data\\"+File_Name;
         else
             filePath=DB_Name+"\\index\\"+File_Name;
+#endif
+        
         file->fp.open(filePath.c_str(),ios::binary|ios::out|ios::in);
         if (!file->fp.is_open()) {//文件打开失败
             cout<<"in BufferManager::get_file_info,文件打开失败"<<endl;
             exit(0);
         }
         //文件打开成功
-        file->fp.seekg(ios::end);
+        file->fp.seekg(0,ios::end);
         file->type=m_fileType;
         file->busy=0;
         file->FileBlockNum=file->fp.tellg()/BLOCK_LEN;
@@ -146,23 +151,27 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
     //windows系统下用\\，Linux下用/
     
      //Linux系统
-//    if (m_fileType==0)
-//        filePath=DB_Name+"/data/"+File_Name;
-//    else
-//        filePath=DB_Name+"/index/"+File_Name;
-    
+#ifdef linux
+    if (m_fileType==0)
+        filePath=DB_Name+"/data/"+File_Name;
+    else
+        filePath=DB_Name+"/index/"+File_Name;
+#endif
     //windowns 系统
+#ifndef linux
     if (m_fileType==0)
         filePath=DB_Name+"\\data\\"+File_Name;
     else
         filePath=DB_Name+"\\index\\"+File_Name;
+#endif
+    
     file->fp.open(filePath.c_str(),ios::binary);
     if (!file->fp.is_open()) {//文件打开失败
         cout<<"in BufferManager::get_file_info,文件打开失败"<<endl;
         exit(0);
     }
     //文件打开成功
-    file->fp.seekg(ios::end);
+    file->fp.seekg(0,ios::end);
     file->type=m_fileType;
     file->busy=0;
     file->FileBlockNum=file->fp.tellg()/BLOCK_LEN;
@@ -183,7 +192,11 @@ void BufferManager::closeFile(string DB_Name, string File_Name, int type)//若�
     if (file==NULL) //该文件不在内存中，直接返回
         return;
     block=bp=file->firstBlock;
-
+    //防止不正常操作
+    if (bp==NULL) {//正常情况下文件链表下必有块
+        cout<<"in BufferManager::closeFile,文件链表下没有链接块"<<endl;
+        exit(0);
+    }
     //将块扔到垃圾链表中
     while (bp->next!=NULL) {//找到块尾，将其next指向blockHandle，并且重置blockHandle
         if(bp->dirtyBlock)//假如该块为脏块
@@ -230,7 +243,7 @@ blockInfo* BufferManager::readBlock(string DB_Name,fileInfo* file, int blockNum)
     //将该块链接到该文件头下
     bp=file->firstBlock;
     block->next=bp;
-    file->firstBlock=bp;
+    file->firstBlock=block;
     
     return block;
 }
@@ -315,17 +328,19 @@ void BufferManager::CreateFile(string DB_Name, string File_Name,int type)
     //windows系统下用\\，Linux下用/
     
     //Linux系统
-//     if (type==0)
-//        filePath=DB_Name+"/data/"+File_Name;
-//     else
-//        filePath=DB_Name+"/index/"+File_Name;
-    
-    
+#ifdef linux
+     if (type==0)
+        filePath=DB_Name+"/data/"+File_Name;
+     else
+        filePath=DB_Name+"/index/"+File_Name;
+#endif
     //windowns 系统
+#ifndef linux
     if (type==0)
         filePath=DB_Name+"\\data\\"+File_Name;
     else
         filePath=DB_Name+"\\index\\"+File_Name;
+#endif
     
     fp.open(filePath.c_str(),ios::binary|ofstream::out);
     if (!fp.is_open()) {//文件打开失败
@@ -345,21 +360,23 @@ void BufferManager::DeleteFile(string DB_Name, string File_Name,int type)
     //windows系统下用\\，Linux下用/
     
     //Linux系统
-    
-//     if (type==0)
-//        filePath=DB_Name+"/data/"+File_Name;
-//     else
-//        filePath=DB_Name+"/index/"+File_Name;
-//     string fileCommand="rm "+filePath;
-//     system(fileCommand.c_str());
-    
+#ifdef linux
+     if (type==0)
+        filePath=DB_Name+"/data/"+File_Name;
+     else
+        filePath=DB_Name+"/index/"+File_Name;
+     string fileCommand="rm "+filePath;
+     system(fileCommand.c_str());
+#endif
     //windowns 系统
+#ifndef linux
     if (type==0)
         filePath=DB_Name+"\\data\\"+File_Name;
     else
         filePath=DB_Name+"\\index\\"+File_Name;
     string fileCommand="del "+filePath;
     system(fileCommand.c_str());
+#endif
 }
 void BufferManager::quitProg(string DB_Name)
 {
@@ -402,18 +419,19 @@ bool BufferManager::HasFile(string DB_Name, string File_Name, int type)
     //windows系统下用\\，Linux下用/
     
     //Linux系统
-    
-//     if (type==0)
-//         filePath=DB_Name+"/data/"+File_Name;
-//     else
-//         filePath=DB_Name+"/index/"+File_Name;
-    
+#ifdef linux
+     if (type==0)
+         filePath=DB_Name+"/data/"+File_Name;
+     else
+         filePath=DB_Name+"/index/"+File_Name;
+#endif
     //windowns 系统
+#ifndef linux
     if (type==0)
         filePath=DB_Name+"\\data\\"+File_Name;
     else
         filePath=DB_Name+"\\index\\"+File_Name;
-    
+#endif
     fp.open(filePath.c_str(),ios::in);
     if (!fp) //文件没被打开
         return false;
@@ -438,18 +456,19 @@ int BufferManager::getBlockNum(string DB_Name, string File_Name, int type)
     //windows系统下用\\，Linux下用/
     
     //Linux系统
-    
-//     if (type==0)
-//         filePath=DB_Name+"/data/"+File_Name;
-//     else
-//         filePath=DB_Name+"/index/"+File_Name;
-    
+#ifdef linux
+     if (type==0)
+         filePath=DB_Name+"/data/"+File_Name;
+     else
+         filePath=DB_Name+"/index/"+File_Name;
+#endif
     //windowns 系统
+#ifndef linux
     if (type==0)
         filePath=DB_Name+"\\data\\"+File_Name;
     else
         filePath=DB_Name+"\\index\\"+File_Name;
-    
+#endif
     fp.open(filePath.c_str(),ios::in);
     if (!fp) //文件没被打开
     {
@@ -458,7 +477,7 @@ int BufferManager::getBlockNum(string DB_Name, string File_Name, int type)
     }
     else    //文件被打开
     {
-        fp.seekg(ios::end);
+        fp.seekg(0,ios::end);
         int numOfBlock=fp.tellg()/BLOCK_LEN;
         fp.close();//文件关闭
         return numOfBlock;
@@ -467,22 +486,25 @@ int BufferManager::getBlockNum(string DB_Name, string File_Name, int type)
 void BufferManager::UseDB(string DB_Name)//创建路径，三个目录
 {
     //Linux系统
-    
-//     string commandMD="mkdir "+DB_Name;
-//     string commandMD1="mkdir "+DB_Name+"/data";
-//     string commandMD2="mkdir "+DB_Name+"/index";
-//     system("pwd");
-//     system(commandMD.c_str());
-//     system(commandMD1.c_str());
-//     system(commandMD2.c_str());
+#ifdef linux
+     string commandMD="mkdir "+DB_Name;
+     string commandMD1="mkdir "+DB_Name+"/data";
+     string commandMD2="mkdir "+DB_Name+"/index";
+     system("pwd");
+     system(commandMD.c_str());
+     system(commandMD1.c_str());
+     system(commandMD2.c_str());
+#endif
     
     
     //windows系统
+#ifndef linux
     string commandMD="md "+DB_Name;
     string commandMD1="md "+DB_Name+"//data";
     string commandMD2="md "+DB_Name+"//index";
     system(commandMD.c_str());
     system(commandMD1.c_str());
     system(commandMD2.c_str());
+#endif
 }
 
