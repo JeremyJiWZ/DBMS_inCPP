@@ -183,15 +183,17 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
 }
 void BufferManager::closeFile(string DB_Name, string File_Name, int type)//若文件在内存中，关闭文件；若不在，直接返回
 {
-    fileInfo *file;
+    fileInfo *file,*fileWork;
     blockInfo *block,*bp;
-    file=FileHandle;
-    while (file!=NULL&&(file->fileName!=File_Name||type!=file->type)) {//找到符合要求的文件头
-        file=file->Next;
+    file=fileWork=FileHandle;
+    while (fileWork!=NULL&&(fileWork->fileName!=File_Name||type!=fileWork->type))
+    {//找到符合要求的文件头
+        file=fileWork;
+        fileWork=fileWork->Next;
     }
-    if (file==NULL) //该文件不在内存中，直接返回
+    if (fileWork==NULL) //该文件不在内存中，直接返回
         return;
-    block=bp=file->firstBlock;
+    block=bp=fileWork->firstBlock;
     //防止不正常操作
     if (bp==NULL) {//正常情况下文件链表下必有块
         cout<<"in BufferManager::closeFile,文件链表下没有链接块"<<endl;
@@ -208,8 +210,18 @@ void BufferManager::closeFile(string DB_Name, string File_Name, int type)//若�
     bp->next=BlockHandle;
     BlockHandle=block;
     
-    file->fp.close();//关闭文件
-    delete file;//释放文件
+    if (file->fileName==File_Name&&file->type==type)
+    //如果FileHandle就是该文件，直接链接下一个文件
+    {
+        FileHandle=FileHandle->Next;
+    }
+    else //否则
+    {
+        file->Next=fileWork->Next;//将该文件从链表中删除
+    }
+    fileCount--;
+    fileWork->fp.close();//关闭文件
+    delete fileWork;//释放文件
     return;
 }
 void BufferManager::writeBlock(string DB_Name,blockInfo* block)//将该块写回磁盘，不涉及其他操作
