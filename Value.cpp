@@ -6,7 +6,7 @@
 //  Copyright © 2015年 Sylvanus. All rights reserved.
 //
 
-#include "Value.hpp"
+#include "Value.h"
 
 Value::Value() {
 }
@@ -42,6 +42,10 @@ void Value::setFloat(float _floatValue) {
 void Value::setString(string _stringValue){
 	type = STRING;
     stringValue = _stringValue;
+}
+
+void Value::setValueName(string _ValueName){
+	ValueName = _ValueName;
 }
 
 bool Value::isEqualTo(Value value) {

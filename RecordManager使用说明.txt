@@ -1,0 +1,36 @@
+
+RecordManager已经完成debug，还有两处错误，需要等待BufferManager的debug。    by 赵冠淳
+
+
+API说明：
+
+//用于彻底删除表
+void DropTable(string DB_name,string table_name);
+
+//bug，判断表是否存在，现在问题是当表不存在时，这个函数会导致程序崩溃
+bool DataExist(string DB_name,string table_name);
+
+//创建表，需要表的属性，struct TableHead 和 struct TableAttr 请参照CatalogManager中的定义
+void CreateTable(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr);
+
+//搜索并打印，直接根据所给条件搜索不存在索引的条目，条件通过 Value[] 和 Condition[] 获得，Value类具体请参照
+// Value.hpp 和 Value.cpp ，Condition 是枚举属性，具体请参照 Condition.h ，CondNum 是条件的个数，注意 CondNum
+// 需要是 const int
+void SelectRecord_WithoutIndex(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr,Value* attributeValue,Condition* cond,const int CondNum);
+
+//搜索并打印，根据所给的offset容器，直接打印相应条目，注意offset是一个 unsigned int 的容器
+void SelectRecord_WithIndex(string DB_name,string table_name,vector<unsigned int>& offset,struct TableHead& tableHead, struct TableAttr* tableAttr);
+
+//将所给的条目插入相应的表，并返回一个 unsigned int 的偏移量，所给的条目应该是一个char数组
+unsigned int InsertRecord(string& DB_name,string& table_name,char* insert_info);
+
+//根据所给的offset容器，直接删除相应条目，注意offset是一个 unsigned int 的容器
+void DeleteRecord_WithIndex(string DB_name,string table_name,vector<unsigned int>& offset);
+
+//直接根据所给条件删除不存在索引的条目，条件通过 Value[] 和 Condition[] 获得，Value类具体请参照Value.hpp和
+// Value.cpp，Condition 是枚举属性，具体请参照 Condition.h ，CondNum是条件的个数，注意 CondNum 需要是 const int
+void DeleteRecord_WithoutIndex(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr,Value* attributeValue,Condition* cond,const int CondNum);
+
+
+PS：
+另外一个bug是关闭数据库后再次打开，data里面的数据会出错，出现乱码。
