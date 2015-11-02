@@ -1,4 +1,3 @@
-﻿//
 //  Value.hpp
 //  DBMS
 //
@@ -6,8 +5,8 @@
 //  Copyright © 2015年 Sylvanus. All rights reserved.
 //
 
-#ifndef Value_hpp
-#define Value_hpp
+#ifndef Value_h
+#define Value_h
 
 #include <stdio.h>
 #include <string>
@@ -32,6 +31,7 @@ public:
     void setInt(int intValue);
     void setFloat(float floatValue);
     void setString(string stringValue);
+    void setValueName(string ValueName); 
     bool isEqualTo(Value value);
     bool isNotEqualTo(Value value);
     bool isLessThan(Value value);
@@ -40,4 +40,5 @@ public:
     bool isGreatEqualTo(Value value);
 };
 
+#include "Value.cpp" 
 #endif /* Value_hpp */
