@@ -84,6 +84,7 @@ void RecordManager::CreateTable(string DB_name,string table_name,struct TableHea
 	WriteInt(block_zero_info->cBlock+8,0);
 	WriteInt(block_zero_info->cBlock+12,0);
 	block_zero_info->lock=0;
+	block_zero_info->dirtyBlock=1; 
 }
 
 string RecordManager::cstr_to_string( char* cstr)
@@ -294,9 +295,16 @@ void RecordManager::SelectRecord_WithIndex(string DB_name,string table_name,vect
 	block_zero_info->lock=1;
 	br = (unsigned int)ReadInt(block_zero_info->cBlock);
 	rl = (unsigned int)ReadInt(block_zero_info->cBlock+4);
+	offset_max = (unsigned int)ReadInt(block_zero_info->cBlock+8);
 	block_zero_info->lock=0;
 	
 	sort(offset.begin(),offset.end(),SortByM1);  //对offset排序 	
+	if(offset.back()>=offset_max)
+	{
+		cout << "Select Record Failed: unexisted offset.\n";
+		return;
+	}	
+	
 	PrintAttr(tableHead,tableAttr);	
 
 	for(int i=0;i<offset.size();i++)
@@ -313,6 +321,52 @@ void RecordManager::SelectRecord_WithIndex(string DB_name,string table_name,vect
 			cout << "Select Record Failed: empty record.\n";
 		}
 		else PrintRecord(block_info->cBlock+(offset.at(i)%br)*rl,tableHead,tableAttr);
+	}
+	block_info->lock=0;
+}
+
+void RecordManager::SelectRecord_All(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr)
+{
+	block_zero_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,0); 
+	block_zero_info->lock=1;
+	br = (unsigned int)ReadInt(block_zero_info->cBlock); 
+	rl = (unsigned int)ReadInt(block_zero_info->cBlock+4); 
+	offset_max = (unsigned int)ReadInt(block_zero_info->cBlock+8);
+	block_zero_info->lock=0;
+	
+	PrintAttr(tableHead,tableAttr);	
+	if(offset_max==0)  return;
+	
+	for(block_no=1;block_no<(offset_max-1)/br+1;block_no++)
+	{
+		block_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,block_no);
+		block_info->lock=1;
+		for(int i=0;i<br*rl;i=i+rl)
+		{
+			if(Record_IsEmpty(block_info->cBlock+i,rl))
+			{
+				continue;
+			}
+			else
+			{
+				PrintRecord(block_info->cBlock+i,tableHead,tableAttr);
+			}
+		}
+		block_info->lock=0;
+	}
+	
+	block_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,block_no);//最后一个块的扫描
+	block_info->lock=1;
+	for(int i=0;i<=((offset_max-1)%br)*rl;i=i+rl)
+	{
+		if(Record_IsEmpty(block_info->cBlock+i,rl))
+		{
+			continue;
+		}
+		else
+		{
+			PrintRecord(block_info->cBlock+i,tableHead,tableAttr);
+		}
 	}
 	block_info->lock=0;
 }
@@ -360,6 +414,8 @@ unsigned int RecordManager::InsertRecord(string& DB_name,string& table_name,char
 		WriteInt(block_zero_info->cBlock+8,offset_max+1);
 	}
 	block_zero_info->lock=0;
+	
+	block_zero_info->dirtyBlock=1; 
 		
 	printf("Insert Operation Succeed.\n");
 	return offset;
@@ -380,9 +436,15 @@ void RecordManager::DeleteRecord_WithIndex(string DB_name,string table_name,vect
 	block_zero_info->lock=1; 
 	br = (unsigned int)ReadInt(block_zero_info->cBlock);
 	rl = (unsigned int)ReadInt(block_zero_info->cBlock+4);
+	offset_max = (unsigned int)ReadInt(block_zero_info->cBlock+8);
 	DeletedRecordNum = (unsigned int)ReadInt(block_zero_info->cBlock+12);
 	
-	sort(offset.begin(),offset.end(),SortByM1);  //对offset排序 	
+	sort(offset.begin(),offset.end(),SortByM1);  //对offset排序 
+	if(offset.back()>=offset_max)
+	{
+		cout << "Delete Record Failed: unexisted offset.\n";
+		return;
+	}	
 
 	for(int i=0;i<offset.size();i++)
 	{
@@ -409,6 +471,8 @@ void RecordManager::DeleteRecord_WithIndex(string DB_name,string table_name,vect
 	
 	WriteInt(block_zero_info->cBlock+12,DeletedRecordNum);	
 	block_zero_info->lock=0; 
+	
+	block_zero_info->dirtyBlock=1; 
 	
 	printf("Delete Operation Succeed.\n");
 }
@@ -467,5 +531,36 @@ void RecordManager::DeleteRecord_WithoutIndex(string DB_name,string table_name,s
 	
 	WriteInt(block_zero_info->cBlock+12,DeletedRecordNum);
 	block_zero_info->lock=1;
+	
+	block_zero_info->dirtyBlock=1; 
+	
+	printf("Delete Operation Succeed.\n");
+}
+
+void RecordManager::DeleteRecord_All(string DB_name,string table_name)
+{
+	block_zero_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,0); 
+	block_zero_info->lock=1;
+	br = (unsigned int)ReadInt(block_zero_info->cBlock);
+	rl = (unsigned int)ReadInt(block_zero_info->cBlock+4);
+	block_zero_info->lock=0;
+	
+	BufferManager::DeleteFile(DB_name,table_name,0);
+	if(BufferManager::HasFile(DB_name,table_name,0))
+	{
+		cout << "Delete Table Failed\n" ; 
+		return;
+	}
+	BufferManager::CreateFile(DB_name,table_name,0);	
+	
+	block_zero_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,0);
+	block_zero_info->lock=1;
+	WriteInt(block_zero_info->cBlock,br);
+	WriteInt(block_zero_info->cBlock+4,rl);
+	WriteInt(block_zero_info->cBlock+8,0);
+	WriteInt(block_zero_info->cBlock+12,0);
+	block_zero_info->lock=0;
+	block_zero_info->dirtyBlock=1; 
+	
 	printf("Delete Operation Succeed.\n");
 }

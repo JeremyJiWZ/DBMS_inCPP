@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>  
+#include <memory.h>
 #include "BufferManager.h" 
 #include "Value.hpp"
 #include "Condition.h" 
@@ -20,7 +21,7 @@ using namespace std;
 
 #define MAX_NAME_LENGTH 64
 
-/* 
+
 struct TableHead{
 	char valid;
 	char tableName[MAX_NAME_LENGTH];//64
@@ -37,7 +38,7 @@ struct TableAttr{
 	char index;//1
 	char indexName[MAX_NAME_LENGTH];//64
 };
-*/
+
 
 class RecordManager
 {
@@ -70,9 +71,11 @@ public:
 	void CreateTable(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr);//ok
 	void SelectRecord_WithoutIndex(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr,Value* attributeValue,Condition* cond,const int CondNum);//ok
 	void SelectRecord_WithIndex(string DB_name,string table_name,vector<unsigned int>& offset,struct TableHead& tableHead, struct TableAttr* tableAttr);//ok
+	void SelectRecord_All(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr);//ok
 	unsigned int InsertRecord(string& DB_name,string& table_name,char* insert_info); //ok
 	void DeleteRecord_WithIndex(string DB_name,string table_name,vector<unsigned int>& offset);//ok 
 	void DeleteRecord_WithoutIndex(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr,Value* attributeValue,Condition* cond,const int CondNum);//ok
+	void DeleteRecord_All(string DB_name,string table_name);
 	
 };
 
