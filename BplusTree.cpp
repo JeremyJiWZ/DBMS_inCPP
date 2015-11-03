@@ -17,9 +17,7 @@
 #pragma mark Insertion
 
 int BplusTree::insertInto(string DBName, string tableName, string indexName, Value attributeValue, int recordOffset) {
-    currentDB = DBName;
-    currentTable = tableName;
-    currentIndex = indexName;
+    init(DBName, tableName, indexName);
     blockInfo *block = BufferManager::get_file_block(DBName, indexName, INDEXFILE, 0);
     readIndexFileHeader((byte *)block->cBlock);
     blockInfo *leaf = searchInTree(rootBlock, attributeValue);
@@ -166,9 +164,7 @@ void BplusTree::insertIntoRoot(blockInfo *block, Value rootValue) {
 #pragma mark Deletion
 
 int BplusTree::deleteFrom(string DBName, string tableName, string indexName, Value attributeValue) {
-    currentDB = DBName;
-    currentTable = tableName;
-    currentIndex = indexName;
+    init(DBName, tableName, indexName);
     blockInfo *block;
     block = BufferManager::get_file_block(DBName, tableName, INDEXFILE, 0);
     readIndexFileHeader((byte *)block->cBlock);
@@ -317,9 +313,7 @@ void BplusTree::adjustRoot(BLOCKHEADER *blockHeader, blockInfo *block) {
 #pragma mark Selection
 
 int BplusTree::select(string DBName, string tableName, string indexName, Value attributeValue, Condition cond, vector<int> &results) {
-    currentDB = DBName;
-    currentTable = tableName;
-    currentIndex = indexName;
+    init(DBName, tableName, indexName);
     blockInfo *block = BufferManager::get_file_block(DBName, tableName, INDEXFILE, 0);
     readIndexFileHeader((byte *)block->cBlock);
     blockInfo *leaf = searchInTree(rootBlock, attributeValue);
@@ -417,7 +411,7 @@ blockInfo *BplusTree::searchInTree(int rootNo, Value attributeValue) {
 }
 
 short BplusTree::findPosition(byte *block, Value benchmark) {
-    BLOCKHEADER *blockHeader =readBlockHeader(block);
+    BLOCKHEADER *blockHeader = readBlockHeader(block);
     int fp = sizeof(BLOCKHEADER);
     short i;
     for (i=1; i<=blockHeader->nodeNumber; i++) {
@@ -430,7 +424,7 @@ short BplusTree::findPosition(byte *block, Value benchmark) {
 }
 
 short BplusTree::findPosition(byte *block, int ptr) {
-    BLOCKHEADER *blockHeader =readBlockHeader(block);
+    BLOCKHEADER *blockHeader = readBlockHeader(block);
     int fp = sizeof(BLOCKHEADER);
     short i;
     for (i=1; i<=blockHeader->nodeNumber; i++) {
@@ -443,7 +437,7 @@ short BplusTree::findPosition(byte *block, int ptr) {
 }
 
 int BplusTree::findRightNeighbor(byte *block, int ptr) {
-    BLOCKHEADER *blockHeader =readBlockHeader(block);
+    BLOCKHEADER *blockHeader = readBlockHeader(block);
     short pos = findPosition(block, ptr);
     if (pos == blockHeader->nodeNumber+1)
         return nil;
@@ -534,6 +528,12 @@ void BplusTree::updateFatherPointer(short n, byte *data, int fatherNo) {
 #pragma mark -
 #pragma mark Read/Write Data
 
+void BplusTree::init(string DBName, string tableName, string indexName) {
+    currentDB = DBName;
+    currentTable = tableName;
+    currentIndex = indexName;
+}
+
 void BplusTree::readIndexFileHeader(byte *block) {
     int fp = 0;
     blockNumber = DataTransfer::readInt(block, fp);
@@ -554,7 +554,7 @@ void BplusTree::writeIndexFileHeader(int blockNumber, int rootNumber, int attrib
 
 BLOCKHEADER *BplusTree::readBlockHeader(byte *block) {
     int fp = 0;
-    BLOCKHEADER *blockHeader;
+    BLOCKHEADER *blockHeader = (BLOCKHEADER *)malloc(sizeof(BLOCKHEADER));
     blockHeader->isLeaf = DataTransfer::readByte(block, fp);
     blockHeader->father = DataTransfer::readInt(block, fp);
     blockHeader->left = DataTransfer::readInt(block, fp);
@@ -629,7 +629,7 @@ void BplusTree::printTree() {
     vector<int>::iterator itor = queue.begin();
     while (itor != queue.end()) {
         block = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, *itor);
-        BLOCKHEADER *blockHeader;
+        BLOCKHEADER *blockHeader = readBlockHeader((byte *)block->cBlock);
         cout<<"("<<blockHeader->isLeaf<<", "<<blockHeader->father<<", "<<blockHeader->left<<", "<<blockHeader->nodeNumber<<")[";
         int fp = sizeof(BLOCKHEADER);
         for (int i=0; i<blockHeader->nodeNumber; i++) {

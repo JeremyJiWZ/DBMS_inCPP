@@ -18,6 +18,7 @@
 #define FAIL 0
 
 int IndexManager::create(string DBName, string tableName, string indexName, int attributeBytes, vector<Value> attributeValues, vector<int> recordOffsets) {
+    tree.init(DBName, tableName, indexName);
     int blockNumber = 1;
     int rootBlock = 1;
     int attributeLen = attributeBytes;
@@ -40,7 +41,7 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
     }
     tree.writeIndexFileHeader(blockNumber, rootBlock, attributeLen, maxNode, attributeType);
     tree.writeBlockHeader(1, 1, 0, 0, 0);
-    blockInfo *root = BufferManager::get_file_block(DBName, tableName, INDEXFILE, 1);
+    blockInfo *root = BufferManager::get_file_block(DBName, indexName, INDEXFILE, 1);
     int fp = sizeof(BLOCKHEADER);
     DataTransfer::writeInt(0, (byte *)root->cBlock, fp);
     root->dirtyBlock = true;

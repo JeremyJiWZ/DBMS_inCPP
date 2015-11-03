@@ -14,7 +14,7 @@
 #include<stdlib.h>
 using namespace std;
 
-
+#define linux
 #define BLOCK_LEN 4096 //4K 
 #define BLOCK_FILE_ACTIVE 5
 #define BLOCK_MAX 40

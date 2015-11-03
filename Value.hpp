@@ -43,5 +43,4 @@ public:
     bool isGreatEqualTo(Value value);
 };
 
-#include "Value.cpp" 
 #endif /* Value_hpp */

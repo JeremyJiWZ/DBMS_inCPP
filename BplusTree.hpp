@@ -29,7 +29,7 @@ typedef struct {
 } BLOCKHEADER;
 
 //
-#define INDEXFILE 3
+#define INDEXFILE 1
 
 typedef enum {
     EQUAL,
@@ -86,6 +86,7 @@ public:
     int deleteFrom(string DBName, string tableName, string indexName, Value attributeValue);
     int select(string DBName, string tableName, string indexName, Value attributeValue, Condition cond, vector<int> &results);
     
+    void init(string DBName, string tableName, string indexName);
     void readIndexFileHeader(byte *block);
     void writeIndexFileHeader(int blockNumber, int rootNumber, int attributeLen, short maxNode, byte attributeType);
     BLOCKHEADER *readBlockHeader(byte *block);
