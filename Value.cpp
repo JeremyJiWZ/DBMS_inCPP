@@ -11,19 +11,34 @@
 Value::Value() {
 }
 
-Value::Value(int _intValue,string _ValueName) {
+Value::Value(int _intValue) {
+    type = INT;
+    intValue = _intValue;
+}
+
+Value::Value(float _floatValue) {
+    type = FLOAT;
+    floatValue = _floatValue;
+}
+
+Value::Value(string _stringValue) {
+    type = STRING;
+    stringValue = _stringValue;
+}
+
+Value::Value(int _intValue, string _ValueName) {
     type = INT;
     intValue = _intValue;
     ValueName = _ValueName;
 }
 
-Value::Value(float _floatValue,string _ValueName) {
+Value::Value(float _floatValue, string _ValueName) {
     type = FLOAT;
     floatValue = _floatValue;
     ValueName = _ValueName;
 }
 
-Value::Value(string _stringValue,string _ValueName) {
+Value::Value(string _stringValue, string _ValueName) {
     type = STRING;
     stringValue = _stringValue;
     ValueName = _ValueName;

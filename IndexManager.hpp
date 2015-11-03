@@ -16,9 +16,9 @@
 using namespace std;
 
 class IndexManager {
-private:
-    BplusTree tree;
 public:
+    BplusTree tree;
+    
     int create(string DBName, string tableName, string indexName, int attributeBytes, vector<Value> attributeValues, vector<int> recordOffsets);
     int insertInto(string DBName, string tableName, string indexName, Value attributeValue, int recordOffset);
     int deleteFrom(string DBName, string tableName, string indexName, Value attributeValue);
