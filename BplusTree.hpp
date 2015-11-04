@@ -81,6 +81,7 @@ private:
     Value readValue(byte *block, int &fp);
     void writeValue(Value value, byte *block, int &fp);
     void printValue(byte *block, int &fp);
+    void printValue(byte *block, int &fp, ofstream &fout);
 public:
     int insertInto(string DBName, string tableName, string indexName, Value attributeValue, int recordOffset);
     int deleteFrom(string DBName, string tableName, string indexName, Value attributeValue);
@@ -88,11 +89,12 @@ public:
     
     void init(string DBName, string tableName, string indexName);
     void readIndexFileHeader(byte *block);
-    void writeIndexFileHeader(int blockNumber, int rootNumber, int attributeLen, short maxNode, byte attributeType);
+    void writeIndexFileHeader(int blockNumber, int rootNumber, int attributeLen, short maxNode, int attributeType);
     BLOCKHEADER *readBlockHeader(byte *block);
     void writeBlockHeader(int blockNo, byte isLeaf, int father, int left, short nodeNumber);
     
-    void printTree();
+    void printTree(int count);
+    void printBlock(int blockNo);
 };
 
 #endif /* BplusTree_hpp */

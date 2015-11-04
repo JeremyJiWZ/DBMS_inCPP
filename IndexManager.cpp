@@ -22,10 +22,11 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
     int blockNumber = 1;
     int rootBlock = 1;
     int attributeLen = attributeBytes;
-    short maxNode = (BLOCK_LEN-sizeof(BLOCKHEADER)-BLOCKBYTES)/(BLOCKBYTES+attributeBytes);
+    //short maxNode = (BLOCK_LEN-sizeof(BLOCKHEADER)-BLOCKBYTES)/(BLOCKBYTES+attributeBytes);
+    short maxNode = 6;
     if (maxNode%2 == 1)
         maxNode--;
-    byte attributeType;
+    int attributeType;
     switch (attributeValues.front().type) {
         case Value::INT:
             attributeType = 1;
@@ -48,10 +49,14 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
     
     vector<Value>::iterator valueItor = attributeValues.begin();
     vector<int>::iterator offsetItor = recordOffsets.begin();
+    int count = 0;
     while (valueItor!=attributeValues.end() && offsetItor!=recordOffsets.end()) {
         insertInto(DBName, tableName, indexName, *valueItor, *offsetItor);
+        cout<<(*valueItor).intValue<<":"<<(*offsetItor)<<endl;
         valueItor++;
         offsetItor++;
+        count++;
+        tree.printTree(count);
     }
     return SUCCESS;
 }
