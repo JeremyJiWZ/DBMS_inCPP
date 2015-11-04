@@ -46,13 +46,18 @@ blockInfo* BufferManager::findBlock(string DB_Name)//找到一个空块并将他
     else    //使用LRU算法找到替换块,找到最大的itime，将该块替换出去
     {
         fileInfo* file = FileHandle;
-        blockInfo* bp;
+        blockInfo *bp, *bpa,*blocka;//bpa表示bp前面那个指针,或者bp本身
         block=file->firstBlock;
+        blocka=file->firstBlock;
         while (file!=NULL) {//遍历找到使用时间最大的块
-            bp=file->firstBlock;
+            bpa=bp=file->firstBlock;
             while (bp!=NULL) {
                 if (bp->iTime>=block->iTime&&bp->lock!=0)//该块的使用时间大且未被锁上
+                {
                     block=bp;
+                    blocka=bpa;
+                }
+                bpa=bp;
                 bp=bp->next;
             }
             file=file->Next;
@@ -60,8 +65,19 @@ blockInfo* BufferManager::findBlock(string DB_Name)//找到一个空块并将他
         if (block->dirtyBlock) {//换出脏块
             writeBlock(DB_Name, block);//写回磁盘
         }
+        //将替换出去的块从文件头的块链表中移除
+        if (blocka==block)//第一块
+        {
+            block->file->firstBlock=block->next;
+            block->next=NULL;
+        }
+        else    //非第一块
+        {
+            blocka->next=block->next;
+            block->next=NULL;
+        }
     }
-    return block;
+        return block;
 }
 void BufferManager::replce(fileInfo *m_fileInfo,blockInfo *m_blockInfo)//找到文件最后一块，将该块链接到块尾
 {
