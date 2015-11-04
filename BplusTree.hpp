@@ -78,6 +78,7 @@ private:
     void addNodeWithPointerFirst(byte *block, int pos, short n, Value value, int ptr);
     void addNodeWithValueFirst(byte *block, int pos, short n, Value value, int ptr);
     void updateFatherPointer(short n, byte *data, int fatherNo);
+    void updateFatherBlock(int childNo, int fatherNo, Value value);
     Value readValue(byte *block, int &fp);
     void writeValue(Value value, byte *block, int &fp);
     void printValue(byte *block, int &fp);

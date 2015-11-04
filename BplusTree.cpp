@@ -186,10 +186,11 @@ void BplusTree::deleteNode(blockInfo *block, Value value) {
     byte *data = (byte *)block->cBlock;
     BLOCKHEADER *blockHeader = readBlockHeader(data);
     short pos = findPosition(data, value);
-    copyNodesWithValueFirst(data, pos, data, pos+1, blockHeader->nodeNumber-pos);
+    copyNodesWithPointerFirst(data, pos, data, pos+1, blockHeader->nodeNumber-pos);
     blockHeader->nodeNumber--;
     writeBlockHeader(block->blockNum, blockHeader->isLeaf, blockHeader->father, blockHeader->left, blockHeader->nodeNumber);
     block->dirtyBlock = true;
+#warning delete the most left
     
     handleTooFewNodes(blockHeader, block);
 }
@@ -202,6 +203,7 @@ void BplusTree::deleteNode(blockInfo *block, int ptr) {
     blockHeader->nodeNumber--;
     writeBlockHeader(block->blockNum, blockHeader->isLeaf, blockHeader->father, blockHeader->left, blockHeader->nodeNumber);
     block->dirtyBlock = true;
+#warning delete the most left
     
     handleTooFewNodes(blockHeader, block);
 }
@@ -239,24 +241,27 @@ void BplusTree::handleTooFewNodes(BLOCKHEADER *blockHeader, blockInfo *block) {
 void BplusTree::coalesce(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock) {
     int fp = sizeof(BLOCKHEADER);
     byte *right = (byte *)rightBlock->cBlock;
-    
-    // read child value
-    int child = DataTransfer::readInt(right, fp);
-    blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, child);
-    fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
-    Value value = readValue((byte *)childBlock->cBlock, fp);
-
-    // write child value
-    fp = sizeof(BLOCKHEADER)+leftBlockHeader->nodeNumber*(BLOCKBYTES+attributeLen)+BLOCKBYTES;
     byte *left = (byte *)leftBlock->cBlock;
-    writeValue(value, left, fp);
-    leftBlockHeader->nodeNumber++;
     
-    copyNodesWithPointerFirst(left, leftBlockHeader->nodeNumber++, right, 1, rightBlockHeader->nodeNumber);
+    if (!leftBlockHeader->isLeaf) {
+        // read child value
+        int child = DataTransfer::readInt(right, fp);
+        blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, child);
+        fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
+        Value value = readValue((byte *)childBlock->cBlock, fp);
+        
+        // write child value
+        fp = sizeof(BLOCKHEADER)+leftBlockHeader->nodeNumber*(BLOCKBYTES+attributeLen)+BLOCKBYTES;
+        writeValue(value, left, fp);
+        leftBlockHeader->nodeNumber++;
+    }
+    
+    copyNodesWithPointerFirst(left, leftBlockHeader->nodeNumber+1, right, 1, rightBlockHeader->nodeNumber);
     leftBlockHeader->nodeNumber += rightBlockHeader->nodeNumber;
     writeBlockHeader(leftBlock->blockNum, leftBlockHeader->isLeaf, leftBlockHeader->father, leftBlockHeader->left, leftBlockHeader->nodeNumber);
     
-    updateFatherPointer(rightBlockHeader->nodeNumber+1, right, leftBlock->blockNum);
+    if (!rightBlockHeader->isLeaf)
+        updateFatherPointer(rightBlockHeader->nodeNumber+1, right, leftBlock->blockNum);
     
     // delete block
 #warning memory, blockNumber
@@ -545,6 +550,16 @@ void BplusTree::updateFatherPointer(short n, byte *data, int fatherNo) {
         writeBlockHeader(block->blockNum, blockHeader->isLeaf, blockHeader->father, blockHeader->left, blockHeader->nodeNumber);
         block->dirtyBlock = true;
         readValue(data, fp);
+    }
+}
+
+void BplusTree::updateFatherBlock(int childNo, int fatherNo, Value value) {
+    blockInfo *fatherBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, fatherNo);
+    byte *father = (byte *)fatherBlock->cBlock;
+    int pos = findPosition(father, childNo);
+    if (pos>1) {
+        int fp = sizeof(BLOCKHEADER)+(pos-2)*(BLOCKBYTES+attributeLen)+BLOCKBYTES;
+        writeValue(value, father, fp);
     }
 }
 
