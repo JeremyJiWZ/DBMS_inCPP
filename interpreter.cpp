@@ -25,57 +25,54 @@ string read_input()
 }
 
 //验证drop database语句是否有效
-SQL_CLAUSE drop_database(string SQL,int start)
+void drop_database(string SQL,int start, SQL_CLAUSE & sql_cla)
 {
-	SQL_CLAUSE ret;
 	int pos1, pos2, pos3;
 	pos1 = SQL.find_first_not_of(' ', start);
 	pos2 = SQL.find_first_of(' ', pos1);
 	pos3 = SQL.find_first_not_of(' ', pos2);
 	if (pos1 == string::npos || pos2 == string::npos || pos3 == string::npos || SQL.at(pos3) != ';')
 	{
-		ret.type = ERROR;
-		return ret;
+		sql_cla.type = ERROR;
+		return ;
 	}
-	ret.type = DROPDATABASE;
-	ret.name = SQL.substr(pos1, pos2-pos1);
-	return ret;
+	sql_cla.type = DROPDATABASE;
+	sql_cla.name = SQL.substr(pos1, pos2-pos1);
+	return ;
 }
 
 //验证drop table语句是否有效
-SQL_CLAUSE drop_table(string SQL,int start)
+void drop_table(string SQL,int start, SQL_CLAUSE & sql_cla)
 {
-	SQL_CLAUSE ret;
 	int pos1, pos2, pos3;
 	pos1 = SQL.find_first_not_of(' ', start);
 	pos2 = SQL.find_first_of(' ', pos1);
 	pos3 = SQL.find_first_not_of(' ', pos2);
 	if (pos1 == string::npos || pos2 == string::npos || pos3 == string::npos || SQL.at(pos3) != ';')
 	{
-		ret.type = ERROR;
-		return ret;
+		sql_cla.type = ERROR;
+		return ;
 	}
-	ret.type = DROPTABLE;
-	ret.name = SQL.substr(pos1, pos2-pos1);
-	return ret;
+	sql_cla.type = DROPTABLE;
+	sql_cla.name = SQL.substr(pos1, pos2-pos1);
+	return ;
 }
 
 //验证drop index语句是否有效
-SQL_CLAUSE drop_index(string SQL,int start)
+void drop_index(string SQL,int start, SQL_CLAUSE & sql_cla)
 {
-	SQL_CLAUSE ret;
 	int pos1, pos2, pos3;
 	pos1 = SQL.find_first_not_of(' ', start);
 	pos2 = SQL.find_first_of(' ', pos1);
 	pos3 = SQL.find_first_not_of(' ', pos2);
 	if (pos1 == string::npos || pos2 == string::npos || pos3 == string::npos || SQL.at(pos3) != ';')
 	{
-		ret.type = ERROR;
-		return ret;
+		sql_cla.type = ERROR;
+		return ;
 	}
-	ret.type = DROPINDEX;
-	ret.name = SQL.substr(pos1, pos2-pos1);
-	return ret;
+	sql_cla.type = DROPINDEX;
+	sql_cla.name = SQL.substr(pos1, pos2-pos1);
+	return ;
 }
 
 //验证drop语句是否有效
@@ -105,17 +102,17 @@ SQL_CLAUSE drop_clause(string SQL,int start)
 	}
 	if (SQL.substr(pos1, pos2-pos1) == "database")
 	{
-		ret = drop_database(SQL, pos2);
+		drop_database(SQL, pos2, ret);
 		return ret;
 	}
 	if (SQL.substr(pos1, pos2-pos1) == "table")
 	{
-		ret = drop_table(SQL, pos2);
+		drop_table(SQL, pos2, ret);
 		return ret;
 	}
 	if (SQL.substr(pos1, pos2-pos1) == "index")
 	{
-		ret = drop_index(SQL, pos2);
+		drop_index(SQL, pos2, ret);
 		return ret;
 	}
 	ret.type = ERROR;

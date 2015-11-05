@@ -65,11 +65,11 @@ SQL_CLAUSE create_index_on(string SQL,int start,string sql);
 //验证drop语句是否有效
 SQL_CLAUSE drop_clause(string SQL,int start = 0);
 //验证drop database语句是否有效
-SQL_CLAUSE drop_database(string SQL,int start);
+void drop_database(string SQL,int start, SQL_CLAUSE & sql_cla);
 //验证drop table语句是否有效
-SQL_CLAUSE drop_table(string SQL,int start);
+void drop_table(string SQL,int startt, SQL_CLAUSE & sql_cla);
 //验证drop index语句是否有效
-SQL_CLAUSE drop_index(string SQL,int start);
+void drop_index(string SQL,int startt, SQL_CLAUSE & sql_cla);
 //验证select 语句是否有效
 SQL_CLAUSE select_clause(string SQL,int start);
 //获得属性组或文件组的每一项
