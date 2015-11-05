@@ -67,19 +67,19 @@ private:
     void redistributeFromLeftToRight(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock);
     void redistributeFromRightToLeft(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock);
     void adjustRoot(BLOCKHEADER *blockHeader, blockInfo *block);
+    int getRightNeighbor(byte *block, int ptr);
     
     // Utility
     blockInfo *searchInTree(int rootNo, Value attributeValue);
     short findPosition(byte *block, Value benchmark);
     short findPosition(byte *block, int ptr);
-    int findRightNeighbor(byte *block, int ptr);
     int getLeftMostLeaf(int root);
     void copyNodesWithPointerFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void copyNodesWithValueFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void addNodeWithPointerFirst(byte *block, int pos, short n, Value value, int ptr);
     void addNodeWithValueFirst(byte *block, int pos, short n, Value value, int ptr);
     void updateFatherPointer(short n, byte *data, int fatherNo);
-    void updateFatherBlock(int childNo, int fatherNo, Value value);
+    void updateFatherBlock(int childNo, blockInfo *fatherBlock, Value value);
     Value readValue(byte *block, int &fp);
     void writeValue(Value value, byte *block, int &fp);
     void printValue(byte *block, int &fp);

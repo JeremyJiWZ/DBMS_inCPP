@@ -56,7 +56,7 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
         valueItor++;
         offsetItor++;
         count++;
-        tree.printTree(count);
+//        tree.printTree(count);
     }
     return SUCCESS;
 }
