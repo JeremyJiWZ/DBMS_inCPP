@@ -37,7 +37,7 @@ struct SQL_CLAUSE
     int type;
     string name;
     TableHead table;
-    TableAttr *attr;
+    vector<TableAttr> attr;
     Value *v;
     vector<string> value;
     Condition *cond;
