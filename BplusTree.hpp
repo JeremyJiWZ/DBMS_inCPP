@@ -73,6 +73,7 @@ private:
     short findPosition(byte *block, Value benchmark);
     short findPosition(byte *block, int ptr);
     int findRightNeighbor(byte *block, int ptr);
+    int getLeftMostLeaf(int root);
     void copyNodesWithPointerFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void copyNodesWithValueFirst(byte *destBlock, int destNo, byte *srcBlock, int srcNo, int n);
     void addNodeWithPointerFirst(byte *block, int pos, short n, Value value, int ptr);
