@@ -54,7 +54,7 @@ SQL_CLAUSE create_database(string SQL,int start);
 //验证create table语句是否有效
 SQL_CLAUSE create_table(string SQL,int start);
 //获得属性
-SQL_CLAUSE get_attribute(string temp,string sql);
+void get_attribute(string temp,SQL_CLAUSE &sql_cla);
 //验证create index语句是否有效
 SQL_CLAUSE create_index(string SQL,int start);
 //验证create index on语句是否有效
