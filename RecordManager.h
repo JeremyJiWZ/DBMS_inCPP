@@ -15,29 +15,11 @@
 #include <algorithm>  
 #include <memory.h>
 #include "BufferManager.h" 
-#include "Value.hpp"
+#include "Value.h"
 #include "Condition.h" 
 using namespace std; 
 
 #define MAX_NAME_LENGTH 64
-
-
-struct TableHead{
-	char valid;
-	char tableName[MAX_NAME_LENGTH];//64
-	int attrAmount;//4
-	int recordAmount;//4
-};
-
-struct TableAttr{
-	char attrName[MAX_NAME_LENGTH];//64
-	char type;//1
-	int amount;//max 255, 4bytes
-	char unique;//1
-	char primary;//1
-	char index;//1
-	char indexName[MAX_NAME_LENGTH];//64
-};
 
 
 class RecordManager
@@ -79,5 +61,4 @@ public:
 	
 };
 
-#include "RecordManager.cpp" 
 #endif
