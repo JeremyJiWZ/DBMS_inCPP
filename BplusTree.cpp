@@ -227,14 +227,14 @@ void BplusTree::handleTooFewNodes(BLOCKHEADER *blockHeader, blockInfo *block) {
         if (blockHeader->nodeNumber+neighborBlockHeader->nodeNumber<maxNode)
             coalesce(neighborBlockHeader, neighborBlock, blockHeader, block);
         else
-            redistributeFromLeftToRight(blockHeader, block, neighborBlockHeader, neighborBlock);
+            redistributeFromLeftToRight(neighborBlockHeader, neighborBlock, blockHeader, block);
     } else {
         blockInfo *neighborBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, neighbor);
         BLOCKHEADER *neighborBlockHeader = readBlockHeader((byte *)neighborBlock->cBlock);
         if (blockHeader->nodeNumber+neighborBlockHeader->nodeNumber<maxNode)
             coalesce(blockHeader, block, neighborBlockHeader, neighborBlock);
         else
-            redistributeFromRightToLeft(neighborBlockHeader, neighborBlock, blockHeader, block);
+            redistributeFromRightToLeft(blockHeader, block, neighborBlockHeader, neighborBlock);
     }
 }
 
@@ -274,42 +274,86 @@ void BplusTree::coalesce(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLO
 void BplusTree::redistributeFromLeftToRight(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock) {
     int fp = sizeof(BLOCKHEADER);
     byte *right = (byte *)rightBlock->cBlock;
-
-    // read child value
-    int child = DataTransfer::readInt(right, fp);
-    blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, child);
-    fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
-    Value value = readValue((byte *)childBlock->cBlock, fp);
-    
-    // read ptr
     byte *left = (byte *)leftBlock->cBlock;
-    fp = sizeof(BLOCKHEADER)+leftBlockHeader->nodeNumber*(BLOCKBYTES+attributeLen);
-    int ptr = DataTransfer::readInt(left, fp);
+
+    Value value;
+    int ptr;
+    if (leftBlockHeader->isLeaf) {
+        fp = sizeof(BLOCKHEADER)+(leftBlockHeader->nodeNumber-1)*(BLOCKBYTES+attributeLen);
+        ptr = DataTransfer::readInt(left, fp);
+        value = readValue(left, fp);
+        
+        // move tail pointer
+        int tail = DataTransfer::readInt(left, fp);
+        fp = sizeof(BLOCKHEADER)+(leftBlockHeader->nodeNumber-1)*(BLOCKBYTES+attributeLen);
+        DataTransfer::writeInt(tail, left, fp);
+    } else {
+        // read child value
+        int child = DataTransfer::readInt(right, fp);
+        blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, child);
+        fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
+        value = readValue((byte *)childBlock->cBlock, fp);
+        
+        // read ptr
+        fp = sizeof(BLOCKHEADER)+leftBlockHeader->nodeNumber*(BLOCKBYTES+attributeLen);
+        ptr = DataTransfer::readInt(left, fp);
+    }
     
     leftBlockHeader->nodeNumber--;
     writeBlockHeader(leftBlock->blockNum, leftBlockHeader->isLeaf, leftBlockHeader->father, leftBlockHeader->left, leftBlockHeader->nodeNumber);
+    
     addNodeWithPointerFirst(right, 1, rightBlockHeader->nodeNumber, value, ptr);
     rightBlockHeader->nodeNumber++;
     writeBlockHeader(rightBlock->blockNum, rightBlockHeader->isLeaf, rightBlockHeader->father, rightBlockHeader->left, rightBlockHeader->nodeNumber);
     leftBlock->dirtyBlock = true;
     rightBlock->dirtyBlock = true;
+    
+    // update father pointer
+    if (!rightBlockHeader->isLeaf) {
+        blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, ptr);
+        byte *child = (byte *)childBlock->cBlock;
+        BLOCKHEADER *childBlockHeader = readBlockHeader(child);
+        childBlockHeader->father = rightBlock->blockNum;
+        childBlock->dirtyBlock = true;
+    }
 }
 
 void BplusTree::redistributeFromRightToLeft(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLOCKHEADER *rightBlockHeader, blockInfo *rightBlock) {
     int fp = sizeof(BLOCKHEADER);
     byte *right = (byte *)rightBlock->cBlock;
-    
-    // read child value
-    int child = DataTransfer::readInt(right, fp);
-    blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, child);
-    fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
-    Value value = readValue((byte *)childBlock->cBlock, fp);
-    
-    // write node
     byte *left = (byte *)leftBlock->cBlock;
-    fp = sizeof(BLOCKHEADER)+leftBlockHeader->nodeNumber*(BLOCKBYTES+attributeLen)+BLOCKBYTES;
-    writeValue(value, left, fp);
-    DataTransfer::writeInt(child, left, fp);
+    
+    if (rightBlockHeader->isLeaf) {
+        int ptr = DataTransfer::readInt(right, fp);
+        Value value = readValue(right, fp);
+        
+        // move tail pointer
+        fp = sizeof(BLOCKHEADER)+leftBlockHeader->nodeNumber*(BLOCKBYTES+attributeLen);
+        int tail = DataTransfer::readInt(left, fp);
+        fp = sizeof(BLOCKHEADER)+leftBlockHeader->nodeNumber*(BLOCKBYTES+attributeLen);
+        DataTransfer::writeInt(ptr, left, fp);
+        writeValue(value, left, fp);
+        DataTransfer::writeInt(tail, left, fp);
+        leftBlockHeader->nodeNumber++;
+        writeBlockHeader(leftBlock->blockNum, leftBlockHeader->isLeaf, leftBlockHeader->father, leftBlockHeader->left, leftBlockHeader->nodeNumber);
+    } else {
+        // read child value
+        int ptr = DataTransfer::readInt(right, fp);
+        blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, ptr);
+        byte *child = (byte *)childBlock->cBlock;
+        fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
+        Value value = readValue(child, fp);
+        
+        // write node
+        fp = sizeof(BLOCKHEADER)+leftBlockHeader->nodeNumber*(BLOCKBYTES+attributeLen)+BLOCKBYTES;
+        writeValue(value, left, fp);
+        DataTransfer::writeInt(ptr, left, fp);
+        
+        // update father pointer
+        BLOCKHEADER *childBlockHeader = readBlockHeader(child);
+        childBlockHeader->father = leftBlock->blockNum;
+        childBlock->dirtyBlock = true;
+    }
     
     rightBlockHeader->nodeNumber--;
     writeBlockHeader(rightBlock->blockNum, rightBlockHeader->isLeaf, rightBlockHeader->father, rightBlockHeader->left, rightBlockHeader->nodeNumber);
