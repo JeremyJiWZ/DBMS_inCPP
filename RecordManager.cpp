@@ -9,11 +9,6 @@
 #include "RecordManager.h"
 using namespace std;
 
-#define DATAFILE 0
-#define INT 0
-#define CHAR 1
-#define FLOAT 2
-
 void RecordManager::WriteInt(char* location,int x)
 {
 	memcpy(location,&x,4);
@@ -30,7 +25,8 @@ string RecordManager::ReadString(char* location,int amount)
 {
 	string s;
 	for(int i=0;i<amount;i++)
-		s = s + location[i];
+		if(location[i]!=0)
+			s = s + location[i];
 	return s;
 }
 
@@ -106,6 +102,8 @@ bool RecordManager::match(char* record,struct TableHead& tableHead, struct Table
 			return 0;
 		}
 	}
+	
+	if(CondNum==0) result = 0;
 	
 	for(int i=0;i<tableHead.attrAmount;i++)
 	{
