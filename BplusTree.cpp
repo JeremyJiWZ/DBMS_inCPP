@@ -20,6 +20,7 @@
 int BplusTree::insertInto(string DBName, string tableName, string indexName, Value attributeValue, int recordOffset) {
     init(DBName, tableName, indexName);
     blockInfo *block = BufferManager::get_file_block(DBName, indexName, INDEXFILE, 0);
+    block->dirtyBlock = true;
     readIndexFileHeader((byte *)block->cBlock);
     blockInfo *leaf = searchInTree(rootBlock, attributeValue);
     BLOCKHEADER *blockHeader = readBlockHeader((byte *)leaf->cBlock);
@@ -47,6 +48,7 @@ void BplusTree::insertIntoLeafWithoutSplit(BLOCKHEADER *leafHeader, blockInfo *b
 void BplusTree::insertIntoLeafWithSplit(BLOCKHEADER *leafHeader, blockInfo *block, Value attributeValue, int recordOffset) {
     blockNumber++;
     blockInfo *newBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, blockNumber);
+    newBlock->dirtyBlock = true;
     writeIndexFileHeader(blockNumber, rootBlock, attributeLen, maxNode, type);
     writeBlockHeader(blockNumber, 1, leafHeader->father, block->blockNum, leafHeader->nodeNumber/2);
     
@@ -66,8 +68,10 @@ void BplusTree::insertIntoLeafWithSplit(BLOCKHEADER *leafHeader, blockInfo *bloc
     int neighbor = DataTransfer::readInt(newLeaf, fp);
     if (neighbor != nil) {
         blockInfo *neighborBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, neighbor);
+        neighborBlock->dirtyBlock = true;
         BLOCKHEADER *blockHeader = readBlockHeader((byte *)neighborBlock->cBlock);
         writeBlockHeader(neighbor, blockHeader->isLeaf, blockHeader->father, blockNumber, blockHeader->nodeNumber);
+        neighborBlock->dirtyBlock = true;
         free(blockHeader);
     }
     
@@ -98,6 +102,7 @@ void BplusTree::insertIntoInternalWithoutSplit(BLOCKHEADER *internalHeader, bloc
 void BplusTree::insertIntoInternalWithSplit(BLOCKHEADER *internalHeader, blockInfo *block, Value indexValue, int indexOffset) {
     blockNumber++;
     blockInfo *newBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, blockNumber);
+    newBlock->dirtyBlock = true;
     writeIndexFileHeader(blockNumber, rootBlock, attributeLen, maxNode, type);
     writeBlockHeader(blockNumber, 0, internalHeader->father, block->blockNum, internalHeader->nodeNumber/2);
     
@@ -134,6 +139,7 @@ void BplusTree::insertIntoInternalWithSplit(BLOCKHEADER *internalHeader, blockIn
     
     int leafNo = getLeftMostLeaf(blockNumber);
     blockInfo *leafBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, leafNo);
+    leafBlock->dirtyBlock = true;
     byte *leaf = (byte *)leafBlock->cBlock;
     fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
     insertIntoParent(newBlock, readValue(leaf, fp));
@@ -146,6 +152,7 @@ void BplusTree::insertIntoParent(blockInfo *block, Value indexValue) {
         return;
     }
     blockInfo *fatherBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, fatherNo);
+    fatherBlock->dirtyBlock = true;
     BLOCKHEADER *blockHeader = readBlockHeader((byte *)fatherBlock->cBlock);
     if (blockHeader->nodeNumber == maxNode) {
         insertIntoInternalWithSplit(blockHeader, fatherBlock, indexValue, block->blockNum);
@@ -159,6 +166,8 @@ void BplusTree::insertIntoRoot(blockInfo *block, Value rootValue) {
     blockNumber++;
     blockInfo *newRoot = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, blockNumber);
     blockInfo *oldRoot = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, rootBlock);
+    oldRoot->dirtyBlock = true;
+    newRoot->dirtyBlock = true;
     rootBlock = blockNumber;
     writeIndexFileHeader(blockNumber, rootBlock, attributeLen, maxNode, type);      //update index file header
     
@@ -169,6 +178,7 @@ void BplusTree::insertIntoRoot(blockInfo *block, Value rootValue) {
     blockHeader = readBlockHeader((byte *)block->cBlock);
     writeBlockHeader(block->blockNum, blockHeader->isLeaf, blockNumber, block->blockNum, blockHeader->nodeNumber);
     writeBlockHeader(blockNumber, 0, 0, 0, 1);
+    block->dirtyBlock = true;
     
     // write root data
     int fp = sizeof(BLOCKHEADER);
@@ -184,8 +194,8 @@ void BplusTree::insertIntoRoot(blockInfo *block, Value rootValue) {
 
 int BplusTree::deleteFrom(string DBName, string tableName, string indexName, Value attributeValue) {
     init(DBName, tableName, indexName);
-    blockInfo *block;
-    block = BufferManager::get_file_block(DBName, indexName, INDEXFILE, 0);
+    blockInfo *block = BufferManager::get_file_block(DBName, indexName, INDEXFILE, 0);
+    block->dirtyBlock = true;
     readIndexFileHeader((byte *)block->cBlock);
     blockInfo *leaf = searchInTree(rootBlock, attributeValue);
     deleteNode(leaf, attributeValue);
@@ -229,12 +239,14 @@ void BplusTree::handleTooFewNodes(BLOCKHEADER *blockHeader, blockInfo *block) {
         return;
     int father = blockHeader->father;
     blockInfo *fatherBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, father);
+    fatherBlock->dirtyBlock = true;
     int neighbor = getRightNeighbor((byte *)fatherBlock->cBlock, block->blockNum);
     if (neighbor == nil) {
         int pos = findPosition((byte *)fatherBlock->cBlock, block->blockNum);
         int fp = sizeof(BLOCKHEADER)+(pos-2)*(BLOCKBYTES+attributeLen);
         int leftNeighbor = DataTransfer::readInt((byte *)fatherBlock->cBlock, fp);
         blockInfo *neighborBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, leftNeighbor);
+        neighborBlock->dirtyBlock = true;
         BLOCKHEADER *neighborBlockHeader = readBlockHeader((byte *)neighborBlock->cBlock);
         if (blockHeader->nodeNumber+neighborBlockHeader->nodeNumber<maxNode)
             coalesce(neighborBlockHeader, neighborBlock, blockHeader, block);
@@ -243,6 +255,7 @@ void BplusTree::handleTooFewNodes(BLOCKHEADER *blockHeader, blockInfo *block) {
         free(neighborBlockHeader);
     } else {
         blockInfo *neighborBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, neighbor);
+        neighborBlock->dirtyBlock = true;
         BLOCKHEADER *neighborBlockHeader = readBlockHeader((byte *)neighborBlock->cBlock);
         if (blockHeader->nodeNumber+neighborBlockHeader->nodeNumber<maxNode)
             coalesce(blockHeader, block, neighborBlockHeader, neighborBlock);
@@ -261,6 +274,7 @@ void BplusTree::coalesce(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLO
         // read child value
         int child = DataTransfer::readInt(right, fp);
         blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, child);
+        childBlock->dirtyBlock = true;
         fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
         Value value = readValue((byte *)childBlock->cBlock, fp);
         
@@ -280,6 +294,7 @@ void BplusTree::coalesce(BLOCKHEADER *leftBlockHeader, blockInfo *leftBlock, BLO
     // delete block
 #warning memory, blockNumber
     blockInfo *fatherBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, rightBlockHeader->father);
+    fatherBlock->dirtyBlock = true;
     deleteNode(fatherBlock, rightBlock->blockNum);
     leftBlock->dirtyBlock = true;
     rightBlock->dirtyBlock = true;
@@ -305,6 +320,7 @@ void BplusTree::redistributeFromLeftToRight(BLOCKHEADER *leftBlockHeader, blockI
         // read child value
         int child = DataTransfer::readInt(right, fp);
         blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, child);
+        childBlock->dirtyBlock = true;
         fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
         value = readValue((byte *)childBlock->cBlock, fp);
         
@@ -325,16 +341,17 @@ void BplusTree::redistributeFromLeftToRight(BLOCKHEADER *leftBlockHeader, blockI
     // update father pointer
     if (!rightBlockHeader->isLeaf) {
         blockInfo *childBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, ptr);
+        childBlock->dirtyBlock = true;
         byte *child = (byte *)childBlock->cBlock;
         BLOCKHEADER *childBlockHeader = readBlockHeader(child);
         childBlockHeader->father = rightBlock->blockNum;
         writeBlockHeader(ptr, childBlockHeader->isLeaf, childBlockHeader->father, childBlockHeader->left, childBlockHeader->nodeNumber);
-        childBlock->dirtyBlock = true;
         free(childBlockHeader);
     }
     
     int leafNo = getLeftMostLeaf(rightBlock->blockNum);
     blockInfo *leafBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, leafNo);
+    leafBlock->dirtyBlock = true;
     byte *leaf = (byte *)leafBlock->cBlock;
     fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
     value = readValue(leaf, fp);
@@ -393,6 +410,7 @@ void BplusTree::redistributeFromRightToLeft(BLOCKHEADER *leftBlockHeader, blockI
     
     int leafNo = getLeftMostLeaf(rightBlock->blockNum);
     blockInfo *leafBlock = BufferManager::get_file_block(currentDB, currentIndex, INDEXFILE, leafNo);
+    leafBlock->dirtyBlock = true;
     byte *leaf = (byte *)leafBlock->cBlock;
     fp = sizeof(BLOCKHEADER)+BLOCKBYTES;
     Value value = readValue(leaf, fp);
@@ -412,6 +430,7 @@ void BplusTree::adjustRoot(BLOCKHEADER *blockHeader, blockInfo *block) {
         BLOCKHEADER *newRootBlockHeader = readBlockHeader((byte *)newRootBlock->cBlock);
         writeBlockHeader(root, newRootBlockHeader->isLeaf, 0, 0, newRootBlockHeader->nodeNumber);
         writeIndexFileHeader(blockNumber, root, attributeLen, maxNode, type);
+        newRootBlock->dirtyBlock = true;
         free(newRootBlockHeader);
     }
 }
@@ -419,13 +438,14 @@ void BplusTree::adjustRoot(BLOCKHEADER *blockHeader, blockInfo *block) {
 int BplusTree::getRightNeighbor(byte *block, int ptr) {
     BLOCKHEADER *blockHeader = readBlockHeader(block);
     short pos = findPosition(block, ptr);
-    if (pos == blockHeader->nodeNumber+1)
+    if (pos == blockHeader->nodeNumber+1) {
+        free(blockHeader);
         return nil;
-    else {
+    } else {
         int fp = sizeof(BLOCKHEADER)+pos*(BLOCKBYTES+attributeLen);
+        free(blockHeader);
         return DataTransfer::readInt(block, fp);
     }
-    free(blockHeader);
 }
 
 #pragma mark -
@@ -662,6 +682,7 @@ void BplusTree::updateFatherBlock(int childNo, blockInfo *fatherBlock, Value val
     if (pos>1) {
         int fp = sizeof(BLOCKHEADER)+(pos-2)*(BLOCKBYTES+attributeLen)+BLOCKBYTES;
         writeValue(value, father, fp);
+        fatherBlock->dirtyBlock = true;
     }
 }
 

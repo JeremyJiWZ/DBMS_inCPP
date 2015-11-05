@@ -22,8 +22,8 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
     int blockNumber = 1;
     int rootBlock = 1;
     int attributeLen = attributeBytes;
-    //short maxNode = (BLOCK_LEN-sizeof(BLOCKHEADER)-BLOCKBYTES)/(BLOCKBYTES+attributeBytes);
-    short maxNode = 6;
+    short maxNode = (BLOCK_LEN-sizeof(BLOCKHEADER)-BLOCKBYTES)/(BLOCKBYTES+attributeBytes);
+//    short maxNode = 10;
     if (maxNode%2 == 1)
         maxNode--;
     int attributeType;
@@ -51,8 +51,8 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
     vector<int>::iterator offsetItor = recordOffsets.begin();
     int count = 0;
     while (valueItor!=attributeValues.end() && offsetItor!=recordOffsets.end()) {
+        cout<<(*valueItor).intValue<<":"<<(*offsetItor)<<"  "<<count<<endl;
         insertInto(DBName, tableName, indexName, *valueItor, *offsetItor);
-        cout<<(*valueItor).intValue<<":"<<(*offsetItor)<<endl;
         valueItor++;
         offsetItor++;
         count++;
