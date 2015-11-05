@@ -9,12 +9,15 @@
 #ifndef DBMSSev_Interpreter_h
 #define DBMSSev_Interpreter_h
 
-#include<Value.hpp>
+#include "Value.hpp"
+#include "CatalogManager.h"
+#include "Condition.h"
 #include<iostream>
 #include<string>
 #include<vector>
 using namespace std;
 //定义SQL语句类型的宏
+//<!!!!!问：这么多个宏定义，何不用枚举类型呢？效果一样且更简洁吧。!!!!!!>
 #define CREATEDATABASE 0
 #define CREATETABLE 1
 #define CREATEINDEX 2
@@ -24,13 +27,13 @@ using namespace std;
 #define SELECT 6 //无where
 #define SELECT_WHERE 7 //有where
 #define INSERT 8
-#define DELETE 9
+#define DELETE 9 //有warning似乎是系统保留字
 #define DELETE_WHERE 10
 #define USE 11
 #define EXECFILE 12
 #define QUIT 13
 #define HELP 14
-#define ERROR 99
+#define ERROR 99 //有warning似乎是系统保留字
 
 struct SQL_CLAUSE
 {
@@ -60,11 +63,11 @@ SQL_CLAUSE create_index(string SQL,int start);
 //验证create index on语句是否有效
 SQL_CLAUSE create_index_on(string SQL,int start,string sql);
 //验证drop语句是否有效
-SQL_CLAUSE drop_clause(string SQL,int start);
+SQL_CLAUSE drop_clause(string SQL,int start = 0);
 //验证drop database语句是否有效
 SQL_CLAUSE drop_database(string SQL,int start);
 //验证drop table语句是否有效
-SQL_CLAUSE drop_table(string SQl,int start);
+SQL_CLAUSE drop_table(string SQL,int start);
 //验证drop index语句是否有效
 SQL_CLAUSE drop_index(string SQL,int start);
 //验证select 语句是否有效
@@ -84,10 +87,11 @@ SQL_CLAUSE get_expression(string temp,string sql);
 //获取表达式组的每个表达式
 SQL_CLAUSE get_each(string T,string sql,string condition);
 //验证use语句是否有效
-SQL_CLAUSE use_clause(string SQL,int start);
+SQL_CLAUSE use_clause(string SQL,int start = 0);
 //验证execfile语句是否有效
-SQL_CLAUSE execfile_clause(string SQL,int start);
+SQL_CLAUSE execfile_clause(string SQL,int start = 0);
 //验证quit语句是否有效
-SQL_CLAUSE quit_clause(string SQL,int start);
-
+SQL_CLAUSE quit_clause(string SQL,int start = 0);
+//验证help语句是否有效
+SQL_CLAUSE help_clause(string SQL,int start = 0);
 #endif
