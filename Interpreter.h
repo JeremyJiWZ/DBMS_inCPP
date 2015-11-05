@@ -1,4 +1,4 @@
-//
+﻿//
 //  Interpreter.h
 //  DBMSSev
 //
@@ -36,7 +36,7 @@ struct SQL_CLAUSE
 {
     int type;
     string name;
-    Table_head table;
+    TableHead table;
     TableAttr *attr;
     Value *v;
     vector<string> value;
