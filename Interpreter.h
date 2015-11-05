@@ -9,10 +9,12 @@
 #ifndef DBMSSev_Interpreter_h
 #define DBMSSev_Interpreter_h
 
-#include<Value.hpp>
 #include<iostream>
 #include<string>
 #include<vector>
+#include"CatalogManager.h"
+#include"Value.hpp"
+#include"Condition.h"
 using namespace std;
 //定义SQL语句类型的宏
 #define CREATEDATABASE 0
@@ -31,20 +33,37 @@ using namespace std;
 #define QUIT 13
 #define HELP 14
 #define ERROR 99
-
+//暂时使用
+/*
+#define CTG_INT 0
+#define CTG_CHAR 1
+#define CTG_FLOAT 2
+struct TableAttr{
+    char attrName[MAX_NAME_LENGTH];//64
+    char type;//1
+    int amount;//max 255, 4bytes
+    char unique;//1
+    char primary;//1
+    char index;//1
+    char indexName[MAX_NAME_LENGTH];//64
+};
+//暂时使用
+ */
 struct SQL_CLAUSE
 {
-    int type;
-    string name;
-    int attrAmount;
-    vector<TableAttr> attr;
-    Value *v;
-    vector<string> value;
-    Condition *cond;
-    int condAmount;
+    int type;//语句类型
+    string name;//名字
+    string tableName;//create index时的表名
+    string attrName;//create index时的属性名
+    int attrAmount;//属性数量
+    vector<TableAttr> attr;//属性信息
+    Value *v;   //INDEX?
+    vector<string> value;//insert的值
+    Condition *cond;//where后面的信息
+    int condAmount;//条件数
 };
 //获取用户输入，并对输入作有效性检查，若正确，返回语句的内部表示形式
-SQL_CLAUSE Interpreter(string statement);
+SQL_CLAUSE Interpreter();
 //读取用户输入
 string read_input();//OK
 //验证create语句是否有效
@@ -53,12 +72,9 @@ SQL_CLAUSE create_clause(string SQL,int start);
 SQL_CLAUSE create_database(string SQL,int start);
 //验证create table语句是否有效
 SQL_CLAUSE create_table(string SQL,int start);
-//获得属性
-void get_attribute(string temp,SQL_CLAUSE &sql_cla);
 //验证create index语句是否有效
 SQL_CLAUSE create_index(string SQL,int start);
-//验证create index on语句是否有效
-SQL_CLAUSE create_index_on(string SQL,int start,string sql);
+
 //验证drop语句是否有效
 SQL_CLAUSE drop_clause(string SQL,int start);
 //验证drop database语句是否有效
