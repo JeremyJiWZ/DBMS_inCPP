@@ -1,4 +1,4 @@
-#include<interpreter.h>
+#include<Interpreter.h>
 #include<cstdlib>
 #include<iterator>
 #include<algorithm>
@@ -263,13 +263,20 @@ void create_table(string SQL,int start,SQL_CLAUSE &sql_cla)
                     //保存主键
                     else
                     {
-                        for (auto i:sql_cla.attr) {
-                            if(T==i.attrName){
-                                i.primary=1;
-                                i.index=1;
+                        for (vector<TableAttr>::iterator iter=sql_cla.attr.begin(); iter!=sql_cla.attr.end(); iter++) {
+                            if (T==iter->attrName) {
+                                iter->primary=1;
+                                iter->index=1;
                                 break;
                             }
                         }
+//                        for (auto i:sql_cla.attr) {
+//                            if(T==i.attrName){
+//                                i.primary=1;
+//                                i.index=1;
+//                                break;
+//                            }
+//                        }
                         sql_cla.type=CREATETABLE;
                     }
                 }
@@ -590,7 +597,7 @@ void convert(struct TableHead& tableHead, struct TableAttr* tableAttr,vector<str
 {
     if(tableHead.attrAmount!=info.size())
     {
-        cout << "Convert Failed: wrong size" << endl;	
+        cout << "Convert Failed: wrong size" << endl;
         return;
     }
     
@@ -734,15 +741,15 @@ void ExplainStatement(string statement,SQL_CLAUSE &x)
                             {
                                 ss >> a;
                                 x.v[i/4].setInt(a);
-                            }	
-                        }	
+                            }
+                        }
                         
                     }
                     else x.correct = 0;
                 }
             }
             else if(result.size()==3) x.condAmount = 0;
-            else x.correct = 0;					
+            else x.correct = 0;
         }
         else x.correct = 0;
     }
@@ -751,7 +758,7 @@ void ExplainStatement(string statement,SQL_CLAUSE &x)
         x.type = INSERT;
         if(result.at(1)=="into")
         {
-            x.name = result.at(2);					
+            x.name = result.at(2);
             if(result.size()==4)
             {
                 if(result.at(3).find("values(")==0&&result.at(3).rfind(")")==result.at(3).size()-1)
@@ -759,9 +766,9 @@ void ExplainStatement(string statement,SQL_CLAUSE &x)
                     string s = result.at(3).substr(7,result.at(3).size()-8);
                     x.value = split(s,",");
                 }
-                else x.correct = 0;		
+                else x.correct = 0;
             }
-            else x.correct = 0;				
+            else x.correct = 0;
         }
         else x.correct = 0;
     }
@@ -941,7 +948,7 @@ SQL_CLAUSE quit_clause(string SQL,int start)
     
     pos1 = SQL.find_first_not_of(' ', 0);
     pos2 = SQL.find_first_of(' ', pos1);
-    if (pos1 == string::npos || pos2 == string::npos || SQL.substr(pos1, pos2-pos1) != "use")
+    if (pos1 == string::npos || pos2 == string::npos || SQL.substr(pos1, pos2-pos1) != "quit")
     {
         ret.type = ERROR;
         return ret;
@@ -983,7 +990,7 @@ SQL_CLAUSE help_clause(string SQL,int start)
     ret.type = QUIT;
     return ret;
 }
-void ConvertToArray(TableAttr* &att, vector<TableAttr> &attr)
+void ConvertToArray(TableAttr* att, vector<TableAttr> &attr)
 {
     for (int i=0; i<attr.size(); i++) {
         att[i]=attr[i];
