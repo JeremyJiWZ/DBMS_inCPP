@@ -18,6 +18,7 @@
 #define FAIL 0
 
 int IndexManager::create(string DBName, string tableName, string indexName, int attributeBytes, int type, vector<Value> attributeValues, vector<int> recordOffsets) {
+    BufferManager::CreateFile(DBName, indexName, INDEXFILE);
     tree.init(DBName, tableName, indexName);
     int blockNumber = 1;
     int rootBlock = 1;
