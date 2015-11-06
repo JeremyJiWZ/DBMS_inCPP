@@ -81,17 +81,21 @@ void API()
                         break;
                     }
                     
-                    char a[64] = x.name;
+                    struct TableHead tmp;
+                    tmp.valid= 1;
+                    for (int j=0; j<x.name.length(); j++) {
+                        tmp.tableName[j]=x.name[j];
+                    }
+                    tmp.attrAmount = x.attrAmount;
+                    tmp.recordAmount = 0;
                     
-                    struct TableHead tmp = {1,a,(char)x.attrAmount,0};
-                    
-                    if(catl->CreateTable(tmp,x.attr,x.attrAmount))
+                    if(catl->CreateTable(tmp,x.att,x.attrAmount))
                     {
                         cout << catl->GetErrMsg() << endl;
                         break;
                     }
                     
-                    recordmanager.CreateTable(DB_name,x.name,tmp, x.attr);
+                    recordmanager.CreateTable(DB_name,x.name,tmp, x.att);
                     int attramount;
                     for(int i=0;i<x.attrAmount;i++)
                     {

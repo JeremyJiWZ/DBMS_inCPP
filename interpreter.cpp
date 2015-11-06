@@ -891,6 +891,13 @@ SQL_CLAUSE use_clause(string SQL,int start)
         ret.type = ERROR;
         return ret;
     }
+    pos1 = SQL.find_first_not_of(' ', 0);
+    pos2 = SQL.find_first_of(' ', pos1);
+    if (pos1 == string::npos || pos2 == string::npos || SQL.substr(pos1, pos2-pos1) != "database")
+    {
+        ret.type = ERROR;
+        return ret;
+    }
     pos1 = SQL.find_first_not_of(' ', pos2);
     pos2 = SQL.find_first_of(' ', pos1);
     pos3 = SQL.find_first_not_of(' ', pos2);

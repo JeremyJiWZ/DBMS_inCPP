@@ -16,6 +16,7 @@
 #include <memory.h>
 #include "BufferManager.h" 
 #include "Condition.h" 
+#include "CatalogManager.h"
 using namespace std; 
 
 #define MAX_NAME_LENGTH 64

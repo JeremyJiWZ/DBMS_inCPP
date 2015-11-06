@@ -61,13 +61,13 @@ void RecordManager::CreateTable(string DB_name,string table_name,struct TableHea
 	{
 		switch(tableAttr[i].type)
 		{
-			case INT:
+			case 0:
 				rl = rl + 4;
 				break;
-			case CHAR:
+			case 1:
 				rl = rl + tableAttr[i].amount;
 				break;
-			case FLOAT:
+			case 2:
 				rl = rl + 4;
 				break;
 		}	
@@ -92,7 +92,7 @@ string RecordManager::cstr_to_string( char* cstr)
 bool RecordManager::match(char* record,struct TableHead& tableHead, struct TableAttr* tableAttr,Value* attributeValue,Condition* cond,const int& CondNum)
 {
 	bool result=1;
-	Value ValidValue[CondNum];
+	Value ValidValue[20];
 	
 	for(int i=0;i<CondNum;i++)
 	{
@@ -113,13 +113,13 @@ bool RecordManager::match(char* record,struct TableHead& tableHead, struct Table
 			{
 				switch(tableAttr[i].type)
 				{
-					case INT:
+					case 0:
 						ValidValue[j].setInt(ReadInt(record));
 						break;
-					case CHAR:
+					case 1:
 						ValidValue[j].setString(ReadString(record,tableAttr[i].amount));
 						break;
-					case FLOAT:
+					case 2:
 						ValidValue[j].setFloat(ReadFloat(record));
 						break;
 					default:
@@ -130,7 +130,7 @@ bool RecordManager::match(char* record,struct TableHead& tableHead, struct Table
 				ValidValue[j].setValueName(attributeValue[j].ValueName);
 			}		
 		}
-		if(tableAttr[i].type == CHAR)
+		if(tableAttr[i].type == 1)
 			record = record + tableAttr[i].amount;
 		else record = record + 4;
 	}
@@ -171,9 +171,9 @@ bool RecordManager::match(char* record,struct TableHead& tableHead, struct Table
 	        case GREATEQUAL:
 	            if (!ValidValue[i].isGreatEqualTo(attributeValue[i]))
 	                result = 0;
-	            break;       	
+	            break;
 	        default:
-	        	cout << cout << "Match Failed: wrong condition.\n";
+	        	cout << "Match Failed: wrong condition.\n";
 	        	return 0;
 	            break;
     	}	
@@ -188,15 +188,15 @@ void RecordManager::PrintRecord(char* record,struct TableHead& tableHead, struct
 	{
 		switch(tableAttr[i].type)
 		{
-			case INT:
+			case 0:
 				cout << ReadInt(record);
 				record = record + 4;
 				break;
-			case CHAR:
+			case 1:
 				cout << ReadString(record,tableAttr[i].amount);
 				record = record + tableAttr[i].amount;
 				break;
-			case FLOAT:
+			case 2:
 				cout << ReadFloat(record);
 				break;
 			default:
