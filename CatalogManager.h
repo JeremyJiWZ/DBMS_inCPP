@@ -1,22 +1,21 @@
+#define linux//定义Linux环境
+
+#ifdef linux
+#include <unistd.h>
+#else
+#include<windows.h>
+#include<io.h>
+#endif
+
 #include <stdio.h>
 #include <string>
 #include <fstream>
-#include <stdlib.h>
+#include <iostream>
+
 using namespace std;
 
 #ifndef _Catalob_Manage_H_
 #define _Catalob_Manage_H_
-
-#define linux//定义Linux环境
-//若为Linux
-#ifdef linux
-#include <unistd.h>
-#endif
-//若为Windows
-#ifndef linux
-#include<windows.h>
-#include<io.h>
-#endif
 
 #define CTG_INT 0
 #define CTG_CHAR 1
@@ -26,20 +25,20 @@ using namespace std;
 extern class CatalogManager *catl;
 
 struct TableHead{
-	char valid;
-	char tableName[MAX_NAME_LENGTH];//64
-	int attrAmount;//4
-	int recordAmount;//4
+	char valid;                      //1字节，表是否存在，被删除后为0，新建的表会放在第一个为0的地方
+	char tableName[MAX_NAME_LENGTH]; //64字节，表的名字
+	int attrAmount;                  //4字节，属性的数目
+	int recordAmount;                //4字节，记录的数目
 };
 
 struct TableAttr{
-	char attrName[MAX_NAME_LENGTH];//64
-	char type;//1
-	int amount;//max 255, 4bytes
-	char unique;//1
-	char primary;//1
-	char index;//1
-	char indexName[MAX_NAME_LENGTH];//64
+	char attrName[MAX_NAME_LENGTH];  //64字节，属性的名字
+	char type;                       //1字节，属性的类型
+	int amount;                      //max 255, 4bytes，属性的类型个数，针对char(255)，其余为1
+	char unique;                     //1字节，是否唯一
+	char primary;                    //1字节，是否主键
+	char index;                      //1字节，是否索引
+	char indexName[MAX_NAME_LENGTH]; //64字节，索引的名字
 };
 
 class CatalogManager
@@ -86,19 +85,19 @@ public:
 	int IsAttrInTable(const string & tableName, const string & attrName, int & ret);//存在返ret为1，不存在ret为0
 	int GetAttrType(const string & tableName, const string & attrName, int & type);//返回的类型保存在type中
 	int GetAttrType(const string & tableName, int num, int & type);//返回的类型保存在type中
-	int IsAttrType(const string & tableName, const string & attrName, int type, int & ret);//相同返回0
-	int GetAttrByte(const string & tableName, int num, int & bytes);
-	int GetAllAttrByte(const string & tableName, int & bytes);
+	//int IsAttrType(const string & tableName, const string & attrName, int type, int & ret);//相同返回0
+	//int GetAttrByte(const string & tableName, int num, int & bytes);
+	//int GetAllAttrByte(const string & tableName, int & bytes);
 	int GetTableStruct(const string & tableName, struct TableHead & tableHead, struct TableAttr tableAttr[]);
 	
 	int CreateIndex(const string & tableName, const string & attrName, const string & indexName);
 	int DropIndex(const string & indexName);
-	int GetIndexAmount(const string & tableName);
+	//int GetIndexAmount(const string & tableName);
 	int DoesAttrHaveIndex(const string & tableName, const string & attrName, int & ret);
 	int DoesAttrHaveIndex(const string & tableName, int num, int & ret);
 	int GetIndexName(const string & tableName, int num, string & indexName);//返回的index名字结果在indexName中
-	int GetIndexName(const string & tableName, const string & attrName, string & indexName);//返回的index名字在indexName中
-	int IsIndexInTable(const string & tableName, const string & indexName);
+	//int GetIndexName(const string & tableName, const string & attrName, string & indexName);//返回的index名字在indexName中
+	//int IsIndexInTable(const string & tableName, const string & indexName);
 	
 	int Insert(const string & tableName, int amount, int type[]);//判断插入的数据类型是否匹配，注意不会导致记录的数量改变，若要增加记录数量请使用AddRecordAmount方法
 	//int Delete(const string & tableName);这个函数好像没用

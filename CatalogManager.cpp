@@ -29,15 +29,17 @@ int CatalogManager::CreateDatabase(const string & DBName)//创建数据库：创
 	mcName[DBName.length()] = '\0';
 	if (access(mcName, 0) == 0)//目录存在
 		return 1;*/
-#ifndef linux
+		
+#ifdef linux
+	string command="mkdir ";
+	command+=DBName;
+	if (system(command.c_str()) != 0);
+		return (mErrNum = 1);
+#else
 	if (CreateDirectory(DBName.c_str(), NULL) == 0) //返回0是出错，正确返回1
 		return (mErrNum = 1);
 #endif
-#ifdef linux
-    string command="mkdir ";
-    command+=DBName;
-    system(command.c_str());
-#endif
+
 	mstrBuf = DBName + "\\" + DBName + ".cat";
 	mFile.open(mstrBuf.c_str(), ios::out);
 	miBuf = 0;
@@ -60,12 +62,22 @@ int CatalogManager::DropDatabase(const string & DBName)//删除数据库：删�
   FileOp.wFunc = FO_DELETE;
   return SHFileOperation(&FileOp) == 0;
 }*/
+	//SHFILEOPSTRUCT FileOp;
 	if (access(DBName.c_str(), 0) != 0)//返回0正常存在，返回-1出错
 	{
 		return (mErrNum = 2);
 	}
+	
+	mFile.close();
+	mFile.open("tmp", ios::out);
+	mFile.close();
+#ifdef linux
+	mstrBuf = "rm -rf ";
+#else
 	mstrBuf = "rmdir /s /q ";
+#endif
 	mstrBuf += DBName;
+	mFile.close();
 	if (system(mstrBuf.c_str()) != 0) //返回0正常
 		return (mErrNum = 3);
 	return (mErrNum = 0);
@@ -87,7 +99,10 @@ int CatalogManager::UseDatabase(const string & DBName)//使用数据库
 
 int CatalogManager::CheckUseDB()
 {
-	return mFile.is_open();
+	if (mFile.is_open())
+		return (0);
+	else
+		return (13);
 }
 
 int CatalogManager::GetTable(int Num)
@@ -103,7 +118,7 @@ int CatalogManager::GetTable(int Num)
 	mFile.read((char *)&mTableHead.attrAmount, sizeof(int));
 	mFile.read((char *)&mTableHead.recordAmount, sizeof(int));
 	
-	for (i=0; i<Num; i++)
+	for (i=0; i<mTableHead.attrAmount; i++)
 	{
 		mFile.read(mTableAttr[i].attrName, MAX_NAME_LENGTH*sizeof(char));
 		mFile.read((char *)&mTableAttr[i].type, sizeof(char));
@@ -128,7 +143,7 @@ int CatalogManager::PutTable(int Num)
 	mFile.write((char *)&mTableHead.attrAmount, sizeof(int));
 	mFile.write((char *)&mTableHead.recordAmount, sizeof(int));
 	
-	for (i=0; i<Num; i++)
+	for (i=0; i<mTableHead.attrAmount; i++)
 	{
 		mFile.write(mTableAttr[i].attrName, MAX_NAME_LENGTH*sizeof(char));
 		mFile.write((char *)&mTableAttr[i].type, sizeof(char));
@@ -193,18 +208,22 @@ int CatalogManager::CreateTable(const struct TableHead & tableHead, const struct
 {
 	int i, tbAmt, num, fsEpt=-1;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	mFile.seekg(0, ios::beg);
 	mFile.read((char *)&tbAmt, sizeof(int));
 	
 	num = 0;
 	for (i=0; i<tbAmt; i++)
 	{
-		do
+		GetTable(num);
+		num += 1;
+		while (mTableHead.valid == 0)
 		{
 			if (fsEpt==-1) fsEpt = num-1;
 			GetTable(num);
 			num += 1;
-		}while (mTableHead.valid == 0);
+		}
 		
 		if (strcmp(mTableHead.tableName, tableHead.tableName) == 0) return (mErrNum = 4);
 	}
@@ -220,7 +239,7 @@ int CatalogManager::CreateTable(const struct TableHead & tableHead, const struct
 	
 	if (fsEpt == -1)
 	{
-		PutTable(tbAmt);
+		PutTable(tbAmt-1);
 	}
 	else
 	{
@@ -234,6 +253,8 @@ int CatalogManager::DropTable(const string & tableName)
 {
 	int i, tbAmt, num;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	mFile.seekg(0, ios::beg);
 	mFile.read((char *)&tbAmt, sizeof(int));
 	
@@ -249,12 +270,12 @@ int CatalogManager::DropTable(const string & tableName)
 		if (strcmp(mTableHead.tableName, tableName.c_str()) == 0)
 		{
 			tbAmt--;
-			mFile.seekg(0, ios::beg);
-			mFile.read((char *)&tbAmt, sizeof(int));
+			mFile.seekp(0, ios::beg);
+			mFile.write((char *)&tbAmt, sizeof(int));
 			
 			mTableHead.valid = 0;
 			num--;
-			PutTable(num-1);
+			PutTable(num);
 			return (mErrNum = 0);
 		}
 	}
@@ -266,6 +287,8 @@ int CatalogManager::GetAttrAmount(const string & tableName, int & attrAmount)
 {
 	int i, tbAmt, num;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	mFile.seekg(0, ios::beg);
 	mFile.read((char *)&tbAmt, sizeof(int));
 	
@@ -290,6 +313,8 @@ int CatalogManager::GetAttrAmount(const string & tableName, int & attrAmount)
 
 int CatalogManager::GetAttrNameWithNum(const string & tableName, int num, string & attrName)
 {
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 	
@@ -305,6 +330,8 @@ int CatalogManager::IsAttrInTable(const string & tableName, const string & attrN
 	int i;
 	ret = 0;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -324,6 +351,8 @@ int CatalogManager::GetAttrType(const string & tableName, const string & attrNam
 {
 	int i;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -340,6 +369,8 @@ int CatalogManager::GetAttrType(const string & tableName, const string & attrNam
 
 int CatalogManager::GetAttrType(const string & tableName, int num, int & type)
 {
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -349,7 +380,7 @@ int CatalogManager::GetAttrType(const string & tableName, int num, int & type)
 	type = mTableAttr[num].type;
 	return (mErrNum = 0);
 }//返回的类型保存在type中
-
+/*
 int CatalogManager::IsAttrType(const string & tableName, const string & attrName, int type, int & ret)
 {
 	return (mErrNum = 0);
@@ -363,12 +394,14 @@ int CatalogManager::GetAttrByte(const string & tableName, int num, int & bytes)
 int CatalogManager::GetAllAttrByte(const string & tableName, int & bytes)
 {
 	return (mErrNum = 0);
-}
+}*/
 
 int CatalogManager::GetTableStruct(const string & tableName, struct TableHead & tableHead, struct TableAttr tableAttr[])
 {
 	int i;
 
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 	
@@ -382,28 +415,10 @@ int CatalogManager::GetTableStruct(const string & tableName, struct TableHead & 
 
 int CatalogManager::CreateIndex(const string & tableName, const string & attrName, const string & indexName)
 {
-	int i, j, tbAmt, num;
+	int i;
 	
-	mFile.seekg(0, ios::beg);
-	mFile.read((char *)&tbAmt, sizeof(int));
-	
-	num = 0;
-	for (i=0; i<tbAmt; i++)
-	{
-		do
-		{
-			GetTable(num);
-			num += 1;
-		}while (mTableHead.valid == 0);
-		
-		for (j=0; j<mTableHead.attrAmount; j++)
-			if (mTableAttr[j].index && (strcmp(mTableAttr[j].indexName, indexName.c_str())==0) )
-			{
-				//index name exists
-				return (mErrNum = 13);
-			}
-	}
-	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -428,6 +443,8 @@ int CatalogManager::DropIndex(const string & indexName)
 	
 	int i, j, tbAmt, num;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	mFile.seekg(0, ios::beg);
 	mFile.read((char *)&tbAmt, sizeof(int));
 	
@@ -453,16 +470,18 @@ int CatalogManager::DropIndex(const string & indexName)
 		
 	return (mErrNum = 12);//index not exists
 }
-
+/*
 int CatalogManager::GetIndexAmount(const string & tableName)
 {
 	return (mErrNum = 0);
-}
+}*/
 
 int CatalogManager::DoesAttrHaveIndex(const string & tableName, const string & attrName, int & ret)
 {
 	int i;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -485,6 +504,8 @@ int CatalogManager::DoesAttrHaveIndex(const string & tableName, int num, int & r
 {
 	ret = 0;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -501,6 +522,8 @@ int CatalogManager::DoesAttrHaveIndex(const string & tableName, int num, int & r
 
 int CatalogManager::GetIndexName(const string & tableName, int num, string & indexName)
 {
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -514,7 +537,7 @@ int CatalogManager::GetIndexName(const string & tableName, int num, string & ind
 	
 	return (mErrNum = 0);
 }//返回的index名字结果在indexName中
-
+/*
 int CatalogManager::GetIndexName(const string & tableName, const string & attrName, string & indexName)
 {
 	return (mErrNum = 0);
@@ -523,12 +546,14 @@ int CatalogManager::GetIndexName(const string & tableName, const string & attrNa
 int CatalogManager::IsIndexInTable(const string & tableName, const string & indexName)
 {
 	return (mErrNum = 0);
-}
+}*/
 
 int CatalogManager::Insert(const string & tableName, int amount, int type[])
 {
 	int i;
 	
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -547,6 +572,8 @@ int CatalogManager::Insert(const string & tableName, int amount, int type[])
 
 int CatalogManager::GetRecordAmount(const string & tableName, int & amount)
 {
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -557,6 +584,8 @@ int CatalogManager::GetRecordAmount(const string & tableName, int & amount)
 
 int CatalogManager::AddRecordAmount(const string & tableName, int amount)
 {
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -569,6 +598,8 @@ int CatalogManager::AddRecordAmount(const string & tableName, int amount)
 
 int CatalogManager::SubRecordAmount(const string & tableName, int amount)
 {
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -611,18 +642,18 @@ const int CatalogManager::FLOAT = 2; // = 2;
 const int CatalogManager::MTLEN = MAX_NAME_LENGTH*65+17;  //max table length
 
 const string CatalogManager::mErrMsg[] = {
-	"Welcome to error message.",//0
+	"", //"Welcome to error message.",//0
 	"Database already exists.", //1
 	"Database does not exist.", //2
 	"Database delete error.",   //3
 	"Table already exists.",    //4
 	"Table does not exist.",    //5
 	"Attribute number larger than amount.",  //6
-	"Attribute does not exist.",//7
+	"Attribute does not exist.", //7
 	"Amount of insertd types does not match.", //8
 	"Insertd type does not match.", //9
 	"That attribute does not have an index.", //10
 	"Attribute already has an index.", //11
-	"Index does not exists.",    //12
-	"Index name already exists" //13
+	"Index does not exists.", //12
+	"No database have been used" //13
 };//错误信息，要初始化 
