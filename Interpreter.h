@@ -12,9 +12,14 @@
 #include<iostream>
 #include<string>
 #include<vector>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <sstream>
 #include"CatalogManager.h"
 #include"Value.hpp"
 #include"Condition.h"
+
 using namespace std;
 //定义SQL语句类型的宏
 #define CREATEDATABASE 0
@@ -33,24 +38,9 @@ using namespace std;
 #define QUIT 13
 #define HELP 14
 #define ERROR 99
-//暂时使用
-/*
-#define CTG_INT 0
-#define CTG_CHAR 1
-#define CTG_FLOAT 2
-struct TableAttr{
-    char attrName[MAX_NAME_LENGTH];//64
-    char type;//1
-    int amount;//max 255, 4bytes
-    char unique;//1
-    char primary;//1
-    char index;//1
-    char indexName[MAX_NAME_LENGTH];//64
-};
-//暂时使用
- */
 struct SQL_CLAUSE
 {
+    bool correct;//语句是否正确
     int type;//语句类型
     string name;//名字
     string tableName;//create index时的表名
@@ -75,35 +65,28 @@ SQL_CLAUSE create_table(string SQL,int start);
 //验证create index语句是否有效
 SQL_CLAUSE create_index(string SQL,int start);
 
-//验证drop语句是否有效
-SQL_CLAUSE drop_clause(string SQL,int start);
-//验证drop database语句是否有效
-SQL_CLAUSE drop_database(string SQL,int start);
-//验证drop table语句是否有效
-SQL_CLAUSE drop_table(string SQl,int start);
-//验证drop index语句是否有效
-SQL_CLAUSE drop_index(string SQL,int start);
-//验证select 语句是否有效
-SQL_CLAUSE select_clause(string SQL,int start);
-//获得属性组或文件组的每一项
-SQL_CLAUSE get_part(string temp,string sql,string kind);
-//验证insert 语句是否有效
-SQL_CLAUSE insert_clause(string SQL,int start);
-//验证insert into values语句是否有效
-SQL_CLAUSE insert_into_values(string SQL,int start,string sql);
-//验证delete语句是否有效
-SQL_CLAUSE delete_clause(string SQL,int start);
-//验证 delete from where 语句是否有效
-SQL_CLAUSE delete_from_where(string SQL,int start,string sql);
-//将表达式转化为内部形式
-SQL_CLAUSE get_expression(string temp,string sql);
-//获取表达式组的每个表达式
-SQL_CLAUSE get_each(string T,string sql,string condition);
-//验证use语句是否有效
-SQL_CLAUSE use_clause(string SQL,int start);
-//验证execfile语句是否有效
-SQL_CLAUSE execfile_clause(string SQL,int start);
-//验证quit语句是否有效
-SQL_CLAUSE quit_clause(string SQL,int start);
+////验证drop语句是否有效
+//SQL_CLAUSE drop_clause(string SQL,int start);
+////验证drop database语句是否有效
+//SQL_CLAUSE drop_database(string SQL,int start);
+////验证drop table语句是否有效
+//SQL_CLAUSE drop_table(string SQl,int start);
+////验证drop index语句是否有效
+//SQL_CLAUSE drop_index(string SQL,int start);
+//
+////
+SQL_CLAUSE ExplainStatement(string SQL);
+//
+//
+////将表达式转化为内部形式
+//SQL_CLAUSE get_expression(string temp,string sql);
+////获取表达式组的每个表达式
+//SQL_CLAUSE get_each(string T,string sql,string condition);
+////验证use语句是否有效
+//SQL_CLAUSE use_clause(string SQL,int start);
+////验证execfile语句是否有效
+//SQL_CLAUSE execfile_clause(string SQL,int start);
+////验证quit语句是否有效
+//SQL_CLAUSE quit_clause(string SQL,int start);
 
 #endif
