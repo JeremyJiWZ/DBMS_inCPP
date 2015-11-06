@@ -29,10 +29,15 @@ int CatalogManager::CreateDatabase(const string & DBName)//创建数据库：创
 	mcName[DBName.length()] = '\0';
 	if (access(mcName, 0) == 0)//目录存在
 		return 1;*/
-		
+#ifndef linux
 	if (CreateDirectory(DBName.c_str(), NULL) == 0) //返回0是出错，正确返回1
 		return (mErrNum = 1);
-
+#endif
+#ifdef linux
+    string command="mkdir ";
+    command+=DBName;
+    system(command.c_str());
+#endif
 	mstrBuf = DBName + "\\" + DBName + ".cat";
 	mFile.open(mstrBuf.c_str(), ios::out);
 	miBuf = 0;

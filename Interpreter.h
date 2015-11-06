@@ -65,15 +65,15 @@ SQL_CLAUSE create_table(string SQL,int start);
 //验证create index语句是否有效
 SQL_CLAUSE create_index(string SQL,int start);
 
-////验证drop语句是否有效
-//SQL_CLAUSE drop_clause(string SQL,int start);
-////验证drop database语句是否有效
-//SQL_CLAUSE drop_database(string SQL,int start);
-////验证drop table语句是否有效
-//SQL_CLAUSE drop_table(string SQl,int start);
-////验证drop index语句是否有效
-//SQL_CLAUSE drop_index(string SQL,int start);
-//
+//验证drop语句是否有效
+SQL_CLAUSE drop_clause(string SQL,int start);
+//验证drop database语句是否有效
+SQL_CLAUSE drop_database(string SQL,int start);
+//验证drop table语句是否有效
+SQL_CLAUSE drop_table(string SQl,int start);
+//验证drop index语句是否有效
+SQL_CLAUSE drop_index(string SQL,int start);
+
 ////
 SQL_CLAUSE ExplainStatement(string SQL);
 //
@@ -83,10 +83,10 @@ SQL_CLAUSE ExplainStatement(string SQL);
 ////获取表达式组的每个表达式
 //SQL_CLAUSE get_each(string T,string sql,string condition);
 ////验证use语句是否有效
-//SQL_CLAUSE use_clause(string SQL,int start);
-////验证execfile语句是否有效
-//SQL_CLAUSE execfile_clause(string SQL,int start);
-////验证quit语句是否有效
-//SQL_CLAUSE quit_clause(string SQL,int start);
+SQL_CLAUSE use_clause(string SQL,int start);
+//验证execfile语句是否有效
+SQL_CLAUSE execfile_clause(string SQL,int start);
+//验证quit语句是否有效
+SQL_CLAUSE quit_clause(string SQL,int start);
 
 #endif

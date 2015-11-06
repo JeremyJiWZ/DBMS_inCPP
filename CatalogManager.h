@@ -1,13 +1,22 @@
 #include <stdio.h>
-#include <io.h>
-#include <windows.h>
 #include <string>
 #include <fstream>
-
+#include <stdlib.h>
 using namespace std;
 
 #ifndef _Catalob_Manage_H_
 #define _Catalob_Manage_H_
+
+#define linux//定义Linux环境
+//若为Linux
+#ifdef linux
+#include <unistd.h>
+#endif
+//若为Windows
+#ifndef linux
+#include<windows.h>
+#include<io.h>
+#endif
 
 #define CTG_INT 0
 #define CTG_CHAR 1
