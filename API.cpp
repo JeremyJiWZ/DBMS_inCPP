@@ -60,12 +60,12 @@ void API()
                 BufferManager::UseDB(DB_name);
 				break;
             case CREATETABLE:
-//                if(recordmanager.DataExist(DB_name,x.name) )
-//                {
-//                    cout << "table 已存在" <<　 endl;
-//                    break;
-//                }
-//                else
+                if(recordmanager.DataExist(DB_name,x.name) )
+                {
+                    cout << "table 已存在" <<　 endl;
+                    break;
+                }
+                else
                 {
                     flag = 0;
                     for(int i=0;i<x.attrAmount;i++)
@@ -172,56 +172,58 @@ void API()
                 recordmanager.DropTable(DB_name,x.name);//recordmananger
                 }
                 break;
-                /*
+                
+                //
             case SELECT:
-                if(x.correct==0)
-                {
-                    cout << "Wrong Statement" << endl;
-                    break;
-                }
-                if(!recordmanager.DataExist((DB_name,x.name)))
-                {
-                    cout << "table 不存在" << endl;
-                    break;
-                }
-                
-                catl->GetTableStruct(x.name,table_head,table_attr);
-                
-                if(x.condAmount==0)
-                {
-                    recordmanager.SelectRecord_All(DB_name,x.name,table_head,table_attr);
-                }
-                else
-                {
-                    flag = 1;
-                    string value_name = x.v.at(0).ValueName;
-                    for(int i=0;i<x.condAmount;i++)
-                    {
-                        //检查每个value.valuename是否在该table的属性中，不存在就报错
-                        catl->IsAttrInTable(x.name,x.v.at(i).ValueName,flag);
-                        
-                        if(flag==0||x.v.at(i).ValueName!=vaule_name) //同时检查属性是否是一个 
-                        {
-                            flag = 0;
-                            break; 
-                        }		
+                 if(x.correct==0)
+                 {
+                     cout << "Wrong Statement" << endl;
+                     break;
+                 }
+                 if(!recordmanager.DataExist((DB_name,x.name)))
+                 {
+                     cout << "table 不存在" << endl;
+                     break;
+                 }
+                 catl->GetTableStruct(x.name,table_head,table_attr);
+                 if(x.condAmount==0)
+                 {
+                     recordmanager.SelectRecord_All(DB_name,x.name,table_head,table_attr);
+                 }
+                 else
+                 {
+                     flag = 1;
+                     string value_name = x.v.at(0).ValueName;
+                     for(int i=0;i<x.condAmount;i++)
+                     {
+                     //检查每个value.valuename是否在该table的属性中，不存在就报错
+                         catl->IsAttrInTable(x.name,x.v.at(i).ValueName,flag);
+                         if(flag==0||x.v.at(i).ValueName!=vaule_name) //同时检查属性是否是一个
+                         {
+                             flag = 0;
+                             break;
+                         }
                     }
-                    if(x.condAmount>1) flag = 0;
-                    if(flag == 1)
-                    {
-                        if(catl->GetIndexName(x.name,value_name,Index_name))
-                            flag = 0;
-                    } 
-                    if(flag == 1)
-                    {
-                        //调用index 返回offset
-                        indexmanager.select(DB_name,x.name,Index_name,x.v[0],cond[0],offset);
-                        //调用 recordmanager_withindex 
-                        recordmanager.SelectRecord_WithIndex(DB_name,x.name,offset,table_head,table_attr);
-                    }
-                    else recordmanager.SelectRecord_WithoutIndex(DB_name,x.name,table_head,table_attr,x.v,x.cond,x.condAmount);					
-                }
-                break;
+                     if(x.condAmount>1)
+                         flag = 0;
+                     if(flag == 1)
+                     {
+                         if(catl->GetIndexName(x.name,value_name,Index_name))
+                             flag = 0;
+                     } 
+                     if(flag == 1)
+                     {
+                         offset.clear();
+                         //调用index 返回offset
+                         indexmanager.select(DB_name,x.name,Index_name,x.v[0],cond[0],offset);
+                         //调用 recordmanager_withindex 
+                         recordmanager.SelectRecord_WithIndex(DB_name,x.name,offset,table_head,table_attr);
+                     }
+                     else
+                         recordmanager.SelectRecord_WithoutIndex(DB_name,x.name,table_head,table_attr,x.v,x.cond,x.condAmount);
+                 }
+            break;
+                
              /*
 			case DROPINDEX:
 				if(!recordmanager.DataExist((DB_name,x.tableName)))
@@ -246,55 +248,56 @@ void API()
 				 	catl->DropIndex(Index_name);
 				 }
 				break;			
-			case SELECT:	
+                 case SELECT:	
 				if(x.correct==0)
-				{
-					cout << "Wrong Statement" << endl;
-					break;
-				}
-				if(!recordmanager.DataExist((DB_name,x.tableName)))
-				{
-					cout << "table ≤ª¥Ê‘⁄" << endl;
-					break;
-				}
-				
-				catl->GetTableStruct(x.tableName,table_head,table_attr);
-
-				if(x.condAmount==0)
-				{
-					recordmanager.SelectRecord_All(DB_name,x.name,table_head,table_attr);
-				}
-				else
-				{					
-					bool flag = 1;
-					string value_name = x.v.at(0).ValueName;
-					for(int i=0;i<x.condAmount;i++)
-					{
-						//ºÏ≤È√ø∏ˆvalue.valuename «∑Ò‘⁄∏√tableµƒ Ù–‘÷–£¨≤ª¥Ê‘⁄æÕ±®¥Ì 
-						catl->IsAttrInTable(x.name,x.v.at(i).ValueName,flag);
-						
-						if(flag==0||x.v.at(i).ValueName!=vaule_name) //Õ¨ ±ºÏ≤È Ù–‘ «∑Ò «“ª∏ˆ 
-						{
-							flag = 0;
-							break; 
-						}
-						
-					}
-					if(flag == 1)
-					{
-						if(catl->GetIndexName(x.name,value_name,Index_name))
-							flag = 0;
-					} 
-					if(flag == 1)
-					{
-						//µ˜”√index ∑µªÿoffset
-						indexmanager.select(DB_name,x.name,Index_name,x.v[0],cond[0],offset);
-						//µ˜”√ recordmanager_withindex 
-						recordmanager.SelectRecord_WithIndex(DB_name,x.name,offset,table_head,table_attr);
-					}
-					else recordmanager.SelectRecord_WithoutIndex(DB_name,x.name,table_head,table_attr,x.v,x.cond,x.condAmount);					
-				}
-				break;
+                 {
+                 cout << "Wrong Statement" << endl;
+                 break;
+                 }
+                 if(!recordmanager.DataExist((DB_name,x.name)))
+                 {
+                 cout << "table 不存在" << endl;
+                 break;
+                 }
+                 
+                 catl->GetTableStruct(x.name,table_head,table_attr);
+                 
+                 if(x.condAmount==0)
+                 {
+                 recordmanager.SelectRecord_All(DB_name,x.name,table_head,table_attr);
+                 }
+                 else
+                 {
+                 flag = 1;
+                 string value_name = x.v.at(0).ValueName;
+                 for(int i=0;i<x.condAmount;i++)
+                 {
+                 //检查每个value.valuename是否在该table的属性中，不存在就报错
+                 catl->IsAttrInTable(x.name,x.v.at(i).ValueName,flag);
+                 
+                 if(flag==0||x.v.at(i).ValueName!=vaule_name) //同时检查属性是否是一个
+                 {
+                 flag = 0;
+                 break;
+                 }
+                 }
+                 if(x.condAmount>1) flag = 0;
+                 if(flag == 1)
+                 {
+                 if(catl->GetIndexName(x.name,value_name,Index_name))
+                 flag = 0;
+                 } 
+                 if(flag == 1)
+                 {
+                 offset.clear();
+                 //调用index 返回offset
+                 indexmanager.select(DB_name,x.name,Index_name,x.v[0],cond[0],offset);
+                 //调用 recordmanager_withindex 
+                 recordmanager.SelectRecord_WithIndex(DB_name,x.name,offset,table_head,table_attr);
+                 }
+                 else recordmanager.SelectRecord_WithoutIndex(DB_name,x.name,table_head,table_attr,x.v,x.cond,x.condAmount);					
+                 }
+                 break;
 			case DELETE:
 				if(x.correct==0)
 				{

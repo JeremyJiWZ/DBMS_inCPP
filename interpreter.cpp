@@ -604,6 +604,7 @@ bool convert(struct TableHead& tableHead, struct TableAttr* tableAttr,vector<str
     int a=0;
     string b;
     float c;
+    string tmp;
     
     
     for(int i=0;i<tableHead.attrAmount;i++)
@@ -625,8 +626,11 @@ bool convert(struct TableHead& tableHead, struct TableAttr* tableAttr,vector<str
                 insert_info = insert_info + 4;
                 break;
             case 1:
-                if((info.at(i).at(0)!='\'')||(info.at(i).at(info.at(i).size()-1)!='\''))
+                tmp = info.at(i);
+                if((tmp.find("\'")!=0)||(tmp.rfind("\'")!=tmp.size()-1))
                    {
+                       cout << info.at(i) << endl;
+                       cout << info.at(i).find("\'") << "     " << info.at(i).rfind("\'") <<endl;
                        cout << "attribute's type is not match" << endl;
                        return 0;
                    }
