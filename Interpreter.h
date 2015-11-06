@@ -47,6 +47,7 @@ struct SQL_CLAUSE
     string attrName;//create index时的属性名
     int attrAmount;//属性数量
     vector<TableAttr> attr;//属性信息
+    TableAttr * att;//属性信息，转化为数组
     Value *v;   //INDEX?
     vector<string> value;//insert的值
     Condition *cond;//where后面的信息
@@ -64,7 +65,7 @@ SQL_CLAUSE create_database(string SQL,int start);
 SQL_CLAUSE create_table(string SQL,int start);
 //验证create index语句是否有效
 SQL_CLAUSE create_index(string SQL,int start);
-
+void ConvertToArray(TableAttr* &att,vector<TableAttr> &attr);
 //验证drop语句是否有效
 SQL_CLAUSE drop_clause(string SQL,int start);
 //验证drop database语句是否有效
