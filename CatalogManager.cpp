@@ -530,6 +530,27 @@ int CatalogManager::GetIndexName(const string & tableName, int num, string & ind
 	return (mErrNum = 0);
 }//返回的index名字结果在indexName中
 
+int CatalogManager::GetIndexName(const string & tableName, const string & attrName, string & indexName)
+{
+	if (mErrNum = CheckUseDB())
+		return mErrNum;
+	GetTableByName(tableName);
+	if (mErrNum != 0) return mErrNum;
+		
+	for (i=0; i<mTableHead.attrAmount; i++)
+	{
+		if (mTableAttr[i].attrName == attrName)
+		{
+			if (mTableAttr[i].index)
+			{
+				indexName = mTableAttr[i].indexName;
+				return (mErrNum = 0);
+			}
+			return (mErrNum = 10);
+		}
+	}
+	return (mErrNum = 7);
+}//返回的index名字在indexName中
 
 int CatalogManager::Insert(const string & tableName, int amount, int type[])
 {

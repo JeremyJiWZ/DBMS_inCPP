@@ -94,7 +94,7 @@ public:
 	int DoesAttrHaveIndex(const string & tableName, const string & attrName, int & ret);
 	int DoesAttrHaveIndex(const string & tableName, int num, int & ret);
 	int GetIndexName(const string & tableName, int num, string & indexName);//返回的index名字结果在indexName中
-	//int GetIndexName(const string & tableName, const string & attrName, string & indexName);//返回的index名字在indexName中
+	int GetIndexName(const string & tableName, const string & attrName, string & indexName);//返回的index名字在indexName中
 	//int IsIndexInTable(const string & tableName, const string & indexName);
 	
 	int Insert(const string & tableName, int amount, int type[]);//判断插入的数据类型是否匹配，注意不会导致记录的数量改变，若要增加记录数量请使用AddRecordAmount方法
