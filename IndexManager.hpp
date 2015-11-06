@@ -19,7 +19,7 @@ class IndexManager {
 public:
     BplusTree tree;
     
-    int create(string DBName, string tableName, string indexName, int attributeBytes, vector<Value> attributeValues, vector<int> recordOffsets);
+    int create(string DBName, string tableName, string indexName, int attributeBytes, int type, vector<Value> attributeValues, vector<int> recordOffsets);
     int insertInto(string DBName, string tableName, string indexName, Value attributeValue, int recordOffset);
     int deleteFrom(string DBName, string tableName, string indexName, Value attributeValue);
     int select(string DBName, string tableName, string indexName, Value attributeValue, Condition cond, vector<int> &results);

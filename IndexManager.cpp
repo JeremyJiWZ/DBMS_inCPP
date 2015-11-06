@@ -17,7 +17,7 @@
 #define SUCCESS 1
 #define FAIL 0
 
-int IndexManager::create(string DBName, string tableName, string indexName, int attributeBytes, vector<Value> attributeValues, vector<int> recordOffsets) {
+int IndexManager::create(string DBName, string tableName, string indexName, int attributeBytes, int type, vector<Value> attributeValues, vector<int> recordOffsets) {
     tree.init(DBName, tableName, indexName);
     int blockNumber = 1;
     int rootBlock = 1;
@@ -27,14 +27,14 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
     if (maxNode%2 == 1)
         maxNode--;
     int attributeType;
-    switch (attributeValues.front().type) {
-        case Value::INT:
+    switch (type) {
+        case 0:
             attributeType = 1;
             break;
-        case Value::FLOAT:
+        case 2:
             attributeType = 2;
             break;
-        case Value::STRING:
+        case 1:
             attributeType = 3;
             break;
         default:
