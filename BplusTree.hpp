@@ -15,6 +15,7 @@
 #include "BufferManager.h"
 #include "DataTransfer.hpp"
 #include "Value.hpp"
+#include "Condition.h"
 using namespace std;
 
 #define BLOCKBYTES sizeof(int)
@@ -30,14 +31,14 @@ typedef struct {
 
 //
 #define INDEXFILE 1
-
+/*
 typedef enum {
     EQUAL,
     LESS,
     LESSEQUAL,
     GREAT,
     GREATEQUAL
-} Condition;
+} Condition;*/
 //
 
 class BplusTree {

@@ -1,5 +1,6 @@
 #include "CatalogManager.h"
 
+
 class CatalogManager *catl = CatalogManager::GetInstance();
 
 CatalogManager::CatalogManager()//私有构造
@@ -20,27 +21,24 @@ CatalogManager * CatalogManager::GetInstance()//获得CatalogManager对象(done)
 	static CatalogManager *catl = NULL;//CatalogManager对象
 	if (catl == NULL)
 		catl = new class CatalogManager;
-	return catl;
+    return catl;
 }
 
 int CatalogManager::CreateDatabase(const string & DBName)//创建数据库：创建数据库目录和cat文件，返回0代表创建成功(done)
 {
-	/*DBName.copy(mcName, DBName.length());
-	mcName[DBName.length()] = '\0';
-	if (access(mcName, 0) == 0)//目录存在
-		return 1;*/
 		
 #ifdef linux
 	string command="mkdir ";
 	command+=DBName;
-	if (system(command.c_str()) != 0);
+	if (system(command.c_str()) != 0)
 		return (mErrNum = 1);
+    mstrBuf = DBName + "/" + DBName + ".cat";
 #else
 	if (CreateDirectory(DBName.c_str(), NULL) == 0) //返回0是出错，正确返回1
-		return (mErrNum = 1);
+        return (mErrNum = 1);
+    mstrBuf = DBName + "\\" + DBName + ".cat";
 #endif
 
-	mstrBuf = DBName + "\\" + DBName + ".cat";
 	mFile.open(mstrBuf.c_str(), ios::out);
 	miBuf = 0;
 	mFile.write((char *)&miBuf, sizeof(int));
@@ -50,18 +48,6 @@ int CatalogManager::CreateDatabase(const string & DBName)//创建数据库：创
 
 int CatalogManager::DropDatabase(const string & DBName)//删除数据库：删除数据库目录和cat文件，返回0代表删除成功
 {
-/*BOOL DelTree(LPCTSTR lpszPath)另一种方法
-{
-  SHFILEOPSTRUCT FileOp;
-  FileOp.fFlags = FOF_NOCONFIRMATION;
-  FileOp.hNameMappings = NULL;
-  FileOp.hwnd = NULL;
-  FileOp.lpszProgressTitle = NULL;
-  FileOp.pFrom = lpszPath;
-  FileOp.pTo = NULL;
-  FileOp.wFunc = FO_DELETE;
-  return SHFileOperation(&FileOp) == 0;
-}*/
 	//SHFILEOPSTRUCT FileOp;
 	if (access(DBName.c_str(), 0) != 0)//返回0正常存在，返回-1出错
 	{
@@ -102,7 +88,7 @@ int CatalogManager::CheckUseDB()
 	if (mFile.is_open())
 		return (0);
 	else
-		return (13);
+		return (14);
 }
 
 int CatalogManager::GetTable(int Num)
@@ -380,21 +366,7 @@ int CatalogManager::GetAttrType(const string & tableName, int num, int & type)
 	type = mTableAttr[num].type;
 	return (mErrNum = 0);
 }//返回的类型保存在type中
-/*
-int CatalogManager::IsAttrType(const string & tableName, const string & attrName, int type, int & ret)
-{
-	return (mErrNum = 0);
-}//相同返回0
 
-int CatalogManager::GetAttrByte(const string & tableName, int num, int & bytes)
-{
-	return (mErrNum = 0);
-}
-
-int CatalogManager::GetAllAttrByte(const string & tableName, int & bytes)
-{
-	return (mErrNum = 0);
-}*/
 
 int CatalogManager::GetTableStruct(const string & tableName, struct TableHead & tableHead, struct TableAttr tableAttr[])
 {
@@ -415,10 +387,31 @@ int CatalogManager::GetTableStruct(const string & tableName, struct TableHead & 
 
 int CatalogManager::CreateIndex(const string & tableName, const string & attrName, const string & indexName)
 {
-	int i;
+	int i, j, tbAmt, num;
 	
 	if (mErrNum = CheckUseDB())
 		return mErrNum;
+		
+	mFile.seekg(0, ios::beg);
+	mFile.read((char *)&tbAmt, sizeof(int));
+	
+	num = 0;
+	for (i=0; i<tbAmt; i++)
+	{
+		do
+		{
+			GetTable(num);
+			num += 1;
+		}while (mTableHead.valid == 0);
+		
+		for (j=0; j<mTableHead.attrAmount; j++)
+			if (mTableAttr[j].index && (strcmp(mTableAttr[j].indexName, indexName.c_str())==0) )
+			{
+				//drop
+				return (mErrNum = 13);//index already exists
+			}
+	}
+		
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
@@ -440,7 +433,6 @@ int CatalogManager::CreateIndex(const string & tableName, const string & attrNam
 
 int CatalogManager::DropIndex(const string & indexName)
 {
-	
 	int i, j, tbAmt, num;
 	
 	if (mErrNum = CheckUseDB())
@@ -470,11 +462,7 @@ int CatalogManager::DropIndex(const string & indexName)
 		
 	return (mErrNum = 12);//index not exists
 }
-/*
-int CatalogManager::GetIndexAmount(const string & tableName)
-{
-	return (mErrNum = 0);
-}*/
+
 
 int CatalogManager::DoesAttrHaveIndex(const string & tableName, const string & attrName, int & ret)
 {
@@ -537,16 +525,7 @@ int CatalogManager::GetIndexName(const string & tableName, int num, string & ind
 	
 	return (mErrNum = 0);
 }//返回的index名字结果在indexName中
-/*
-int CatalogManager::GetIndexName(const string & tableName, const string & attrName, string & indexName)
-{
-	return (mErrNum = 0);
-}//返回的index名字在indexName中
 
-int CatalogManager::IsIndexInTable(const string & tableName, const string & indexName)
-{
-	return (mErrNum = 0);
-}*/
 
 int CatalogManager::Insert(const string & tableName, int amount, int type[])
 {
@@ -654,6 +633,8 @@ const string CatalogManager::mErrMsg[] = {
 	"Insertd type does not match.", //9
 	"That attribute does not have an index.", //10
 	"Attribute already has an index.", //11
-	"Index does not exists.", //12
-	"No database have been used" //13
+	"Index name does not exist.", //12
+	"Index name already exists.", //13
+	"No database have been used" //14
 };//错误信息，要初始化 
+

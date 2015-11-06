@@ -77,7 +77,7 @@ blockInfo* BufferManager::findBlock(string DB_Name)//找到一个空块并将他
             block->next=NULL;
         }
     }
-        return block;
+    return block;
 }
 void BufferManager::replce(fileInfo *m_fileInfo,blockInfo *m_blockInfo)//找到文件最后一块，将该块链接到块尾
 {
@@ -121,10 +121,10 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
         //windows系统下用\\，Linux下用/
         //Linux系统
 #ifdef linux
-         if (m_fileType==0)
-             filePath=DB_Name+"/data/"+File_Name;
-         else
-             filePath=DB_Name+"/index/"+File_Name;
+        if (m_fileType==0)
+            filePath=DB_Name+"/data/"+File_Name;
+        else
+            filePath=DB_Name+"/index/"+File_Name;
 #endif
         
         //windowns 系统
@@ -166,7 +166,7 @@ fileInfo* BufferManager::get_file_info(string DB_Name,string File_Name,int m_fil
     //或者   DB_Name\index\File_Name
     //windows系统下用\\，Linux下用/
     
-     //Linux系统
+    //Linux系统
 #ifdef linux
     if (m_fileType==0)
         filePath=DB_Name+"/data/"+File_Name;
@@ -227,7 +227,7 @@ void BufferManager::closeFile(string DB_Name, string File_Name, int type)//若�
     BlockHandle=block;
     
     if (file->fileName==File_Name&&file->type==type)
-    //如果FileHandle就是该文件，直接链接下一个文件
+        //如果FileHandle就是该文件，直接链接下一个文件
     {
         FileHandle=FileHandle->Next;
     }
@@ -260,7 +260,7 @@ blockInfo* BufferManager::readBlock(string DB_Name,fileInfo* file, int blockNum)
     block->file=file;
     block->blockNum=blockNum;
     block->charNum=BLOCK_LEN;
-
+    
     if (!file->fp.is_open()){//文件无法打开
         cout<<"in BufferManager::readBlock,文件无法打开";
         exit(0);
@@ -357,9 +357,9 @@ void BufferManager::CreateFile(string DB_Name, string File_Name,int type)
     
     //Linux系统
 #ifdef linux
-     if (type==0)
+    if (type==0)
         filePath=DB_Name+"/data/"+File_Name;
-     else
+    else
         filePath=DB_Name+"/index/"+File_Name;
 #endif
     //windowns 系统
@@ -389,12 +389,12 @@ void BufferManager::DeleteFile(string DB_Name, string File_Name,int type)
     
     //Linux系统
 #ifdef linux
-     if (type==0)
+    if (type==0)
         filePath=DB_Name+"/data/"+File_Name;
-     else
+    else
         filePath=DB_Name+"/index/"+File_Name;
-     string fileCommand="rm "+filePath;
-     system(fileCommand.c_str());
+    string fileCommand="rm "+filePath;
+    system(fileCommand.c_str());
 #endif
     //windowns 系统
 #ifndef linux
@@ -448,10 +448,10 @@ bool BufferManager::HasFile(string DB_Name, string File_Name, int type)
     
     //Linux系统
 #ifdef linux
-     if (type==0)
-         filePath=DB_Name+"/data/"+File_Name;
-     else
-         filePath=DB_Name+"/index/"+File_Name;
+    if (type==0)
+        filePath=DB_Name+"/data/"+File_Name;
+    else
+        filePath=DB_Name+"/index/"+File_Name;
 #endif
     //windowns 系统
 #ifndef linux
@@ -485,10 +485,10 @@ int BufferManager::getBlockNum(string DB_Name, string File_Name, int type)
     
     //Linux系统
 #ifdef linux
-     if (type==0)
-         filePath=DB_Name+"/data/"+File_Name;
-     else
-         filePath=DB_Name+"/index/"+File_Name;
+    if (type==0)
+        filePath=DB_Name+"/data/"+File_Name;
+    else
+        filePath=DB_Name+"/index/"+File_Name;
 #endif
     //windowns 系统
 #ifndef linux
@@ -515,22 +515,21 @@ void BufferManager::UseDB(string DB_Name)//创建路径，三个目录
 {
     //Linux系统
 #ifdef linux
-     string commandMD="mkdir "+DB_Name;
-     string commandMD1="mkdir "+DB_Name+"/data";
-     string commandMD2="mkdir "+DB_Name+"/index";
-     system("pwd");
-     system(commandMD.c_str());
-     system(commandMD1.c_str());
-     system(commandMD2.c_str());
+//    string commandMD="mkdir "+DB_Name;
+    string commandMD1="mkdir "+DB_Name+"/data";
+    string commandMD2="mkdir "+DB_Name+"/index";
+//    system(commandMD.c_str());
+    system(commandMD1.c_str());
+    system(commandMD2.c_str());
 #endif
     
     
     //windows系统
 #ifndef linux
-    string commandMD="md "+DB_Name;
+//    string commandMD="md "+DB_Name;
     string commandMD1="md "+DB_Name+"//data";
     string commandMD2="md "+DB_Name+"//index";
-    system(commandMD.c_str());
+//    system(commandMD.c_str());
     system(commandMD1.c_str());
     system(commandMD2.c_str());
 #endif

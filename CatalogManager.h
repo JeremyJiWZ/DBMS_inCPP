@@ -23,24 +23,22 @@ using namespace std;
 #define MAX_NAME_LENGTH 64 //实际上只有63个字符，因为还要有'\0'
 
 extern class CatalogManager *catl;
-
 struct TableHead{
-	char valid;                      //1字节，表是否存在，被删除后为0，新建的表会放在第一个为0的地方
-	char tableName[MAX_NAME_LENGTH]; //64字节，表的名字
-	int attrAmount;                  //4字节，属性的数目
-	int recordAmount;                //4字节，记录的数目
+    char valid;
+    char tableName[64];//64
+    int attrAmount;//4
+    int recordAmount;//4
 };
 
 struct TableAttr{
-	char attrName[MAX_NAME_LENGTH];  //64字节，属性的名字
-	char type;                       //1字节，属性的类型
-	int amount;                      //max 255, 4bytes，属性的类型个数，针对char(255)，其余为1
-	char unique;                     //1字节，是否唯一
-	char primary;                    //1字节，是否主键
-	char index;                      //1字节，是否索引
-	char indexName[MAX_NAME_LENGTH]; //64字节，索引的名字
+    char attrName[64];//64
+    char type;//1
+    int amount;//max 255, 4bytes
+    char unique;//1
+    char primary;//1
+    char index;//1
+    char indexName[64];//64
 };
-
 class CatalogManager
 {
 private:
@@ -70,7 +68,7 @@ private:
 	int miBuf;
 	
 public:
-	
+    
 	static CatalogManager *GetInstance();//获得CatalogManager对象
 	
 	int CreateDatabase(const string & DBName);//创建数据库：创建数据库目录和cat文件，返回0代表创建成功

@@ -1,4 +1,3 @@
-﻿//
 //  Interpreter.h
 //  DBMSSev
 //
@@ -22,26 +21,29 @@
 
 using namespace std;
 //定义SQL语句类型的宏
-#define CREATEDATABASE 0
-#define CREATETABLE 1
-#define CREATEINDEX 2
-#define DROPDATABASE 3
-#define DROPTABLE 4
-#define DROPINDEX 5
-#define SELECT 6 //无where
-#define SELECT_WHERE 7 //有where
-#define INSERT 8
-#define DELETE 9
-#define DELETE_WHERE 10
-#define USE 11
-#define EXECFILE 12
-#define QUIT 13
-#define HELP 14
-#define ERROR 99
+enum INTER_TYPE{
+    CREATEDATABASE,
+    CREATETABLE,
+    CREATEINDEX,
+    DROPDATABASE,
+    DROPTABLE,
+    DROPINDEX,
+    SELECT,
+    SELECT_WHERE,
+    INSERT,
+	DELETE,
+    DELETE_WHERE,
+    USE,
+    EXECFILE,
+    QUIT,
+    HELP,
+    ERROR
+};
+
 struct SQL_CLAUSE
 {
     bool correct;//语句是否正确
-    int type;//语句类型
+    enum INTER_TYPE type;//语句类型
     string name;//名字
     string tableName;//create index时的表名
     string attrName;//create index时的属性名
@@ -54,18 +56,18 @@ struct SQL_CLAUSE
     int condAmount;//条件数
 };
 //获取用户输入，并对输入作有效性检查，若正确，返回语句的内部表示形式
-SQL_CLAUSE Interpreter();
+void Interpreter(SQL_CLAUSE &sql_cla);
 //读取用户输入
 string read_input();//OK
 //验证create语句是否有效
-SQL_CLAUSE create_clause(string SQL,int start);
+void create_clause(string SQL,int start,SQL_CLAUSE &sql_cla);
 //验证create database语句是否有效
 SQL_CLAUSE create_database(string SQL,int start);
 //验证create table语句是否有效
-SQL_CLAUSE create_table(string SQL,int start);
+void create_table(string SQL,int start,SQL_CLAUSE &sql_cla);
 //验证create index语句是否有效
 SQL_CLAUSE create_index(string SQL,int start);
-void ConvertToArray(TableAttr* &att,vector<TableAttr> &attr);
+void ConvertToArray(TableAttr* att,vector<TableAttr> &attr);
 //验证drop语句是否有效
 SQL_CLAUSE drop_clause(string SQL,int start);
 //验证drop database语句是否有效
@@ -76,7 +78,7 @@ SQL_CLAUSE drop_table(string SQl,int start);
 SQL_CLAUSE drop_index(string SQL,int start);
 
 ////
-SQL_CLAUSE ExplainStatement(string SQL);
+void ExplainStatement(string SQL,SQL_CLAUSE &sql_cla);
 //
 //
 ////将表达式转化为内部形式
