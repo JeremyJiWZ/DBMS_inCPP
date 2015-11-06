@@ -126,10 +126,9 @@ void get_attribute(string temp,SQL_CLAUSE &sql_cla)
     return ;
 }
 
-SQL_CLAUSE create_table(string SQL,int start)
+void create_table(string SQL,int start,SQL_CLAUSE &sql_cla)
 {
     string temp,sql,T;
-    SQL_CLAUSE sql_cla;
     sql_cla.attrAmount=0;
     sql_cla.attr.clear();
     int index,end,length;
@@ -141,7 +140,7 @@ SQL_CLAUSE create_table(string SQL,int start)
     {
         cout<<"error: missing ( in the statement!"<<endl;
         sql_cla.type=ERROR;
-        return sql_cla;
+        return ;
     }
     temp=SQL.substr(start,end-start);
     start=end+1;
@@ -160,14 +159,14 @@ SQL_CLAUSE create_table(string SQL,int start)
     {
         cout<<"error: error in create table statement!"<<endl;
         sql_cla.type=ERROR;
-        return sql_cla;
+        return ;
     }
     //若为非法信息，打印出错信息
     else if(temp.find(' ')!=-1)
     {
         cout<<"error: "<<temp<<"---is not a valid table name!"<<endl;
         sql_cla.type=ERROR;
-        return sql_cla;
+        return ;
     }
     else
     {
@@ -182,14 +181,14 @@ SQL_CLAUSE create_table(string SQL,int start)
             {
                 cout<<"error: error in create table statement!"<<endl;
                 sql_cla.type=ERROR;
-                return sql_cla;
+                return ;
             }
             //保存属性
             else
             {
                 get_attribute(temp, sql_cla);
                 if(sql_cla.type==ERROR)
-                    return sql_cla;
+                    return ;
             }
             while(SQL.at(start)==' ')
                 start++;
@@ -204,7 +203,7 @@ SQL_CLAUSE create_table(string SQL,int start)
         {
             cout<<"error: error in create table statement!"<<endl;
             sql_cla.type=ERROR;
-            return sql_cla;
+            return ;
         }
         //存储属性
         else
@@ -233,7 +232,7 @@ SQL_CLAUSE create_table(string SQL,int start)
                     cout<<"syntax error: syntax error in create table statement!"<<endl;
                     cout<<"\t missing key word key!"<<endl;
                     sql_cla.type=ERROR;
-                    return sql_cla;
+                    return ;
                 }
                 //若有，继续验证
                 else if(T=="key")
@@ -252,14 +251,14 @@ SQL_CLAUSE create_table(string SQL,int start)
                     {
                         cout<<"error : missing primary key attribute name!"<<endl;
                         sql_cla.type=ERROR;
-                        return sql_cla;
+                        return ;
                     }
                     //若为非法信息，打印出错信息
                     else if(T.find(' ')!=-1)
                     {
                         cout<<"error : "<<T<<"---is not a valid primary key attribute name!"<<endl;
                         sql_cla.type=ERROR;
-                        return sql_cla;
+                        return ;
                     }
                     //保存主键
                     else
@@ -279,7 +278,7 @@ SQL_CLAUSE create_table(string SQL,int start)
                 {
                     cout<<"error : "<<T<<"---is not a valid key word!"<<endl;
                     sql_cla.type=ERROR;
-                    return sql_cla;
+                    return ;
                 }
             }
             //若为一般属性
@@ -291,7 +290,7 @@ SQL_CLAUSE create_table(string SQL,int start)
     }
     sql_cla.type=CREATETABLE;
     ConvertToArray(sql_cla.att, sql_cla.attr);
-    return sql_cla;
+    return ;
 }
 SQL_CLAUSE create_database(string SQL,int start)
 {
@@ -465,9 +464,8 @@ SQL_CLAUSE create_index(string SQL,int start)
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //验证create语句是否有效
-SQL_CLAUSE create_clause(string SQL,int start)
+void create_clause(string SQL,int start,SQL_CLAUSE &sql_cla)
 {
-    SQL_CLAUSE sql_cla;
     string temp;
     int end;
     //获取第二个单词
@@ -487,7 +485,7 @@ SQL_CLAUSE create_clause(string SQL,int start)
         sql_cla=create_database(SQL,start);
     //若为table,继续验证
     else if(temp=="table")
-        sql_cla=create_table(SQL,start);
+        create_table(SQL,start,sql_cla);
     //若为index,继续验证
     else if(temp=="index")
         sql_cla=create_index(SQL,start);
@@ -498,12 +496,10 @@ SQL_CLAUSE create_clause(string SQL,int start)
         sql_cla.type=ERROR;
     }
     //返回create语句的内部形式
-    return sql_cla;
 }
 //获取用户输入，并对输入作有效性检查，若正确，返回语句的内部表示形式
-SQL_CLAUSE Interpreter()
+void Interpreter(SQL_CLAUSE &sql_cla)
 {
-    SQL_CLAUSE sql_cla;
     string SQL;
     string temp;
     string sql;
@@ -524,19 +520,19 @@ SQL_CLAUSE Interpreter()
     }
     //若为create语句
     else if(temp=="create")
-        sql_cla=create_clause(SQL,start);
+        create_clause(SQL,start,sql_cla);
     //若为drop语句
-//    else if(temp=="drop")
-//        sql_cla=drop_clause(SQL,start);
-//    //若为select语句
+    else if(temp=="drop")
+        sql_cla=drop_clause(SQL,start);
+    //若为select语句
     else if(temp=="select")
-        sql_cla=ExplainStatement(SQL.substr(0,SQL.length()-2));
+        ExplainStatement(SQL.substr(0,SQL.length()-2),sql_cla);
     //若为insert语句
     else if(temp=="insert")
-        sql_cla=ExplainStatement(SQL.substr(0,SQL.length()-2));
+        ExplainStatement(SQL.substr(0,SQL.length()-2),sql_cla);
     //若为delete语句
     else if(temp=="delete")
-        sql_cla=ExplainStatement(SQL.substr(0,SQL.length()-2));
+        ExplainStatement(SQL.substr(0,SQL.length()-2),sql_cla);
     //若为use语句
     else if(temp=="use")
         sql_cla=use_clause(SQL,start);
@@ -556,7 +552,6 @@ SQL_CLAUSE Interpreter()
         sql_cla.type=ERROR;
     }
     //返回输入语句的内部形式
-    return sql_cla;
 }
 
 vector<string> split( string str, string pattern)
@@ -639,9 +634,8 @@ void convert(struct TableHead& tableHead, struct TableAttr* tableAttr,vector<str
     }
     
 }
-SQL_CLAUSE ExplainStatement(string statement)
+void ExplainStatement(string statement,SQL_CLAUSE &x)
 {
-    SQL_CLAUSE x;
     x.correct = 1;
     
     vector<string> result=split(statement," ");
@@ -657,8 +651,6 @@ SQL_CLAUSE ExplainStatement(string statement)
                 if(result.size()>5 && result.size()%4==0)
                 {
                     const int CondNum= result.size()/4 - 1;
-                    x.v=new Value[CondNum];
-                    x.cond = new Condition[CondNum];
                     x.condAmount = CondNum;
                     for(int i=4;i<result.size();i=i+4)
                     {
@@ -713,8 +705,6 @@ SQL_CLAUSE ExplainStatement(string statement)
             if(result.size()>4 && (result.size()+1)%4==0)
             {
                 const int CondNum= result.size()/4;
-                x.v=new Value[CondNum];
-                x.cond = new Condition[CondNum];
                 x.condAmount = CondNum;
                 for(int i=3;i<result.size();i=i+4)
                 {
@@ -779,9 +769,7 @@ SQL_CLAUSE ExplainStatement(string statement)
     {
         x.correct = 0;
     }
-    
-    
-    return x;
+    return ;
 }
 //验证drop database语句是否有效
 void drop_database(string SQL,int start, SQL_CLAUSE & sql_cla)
