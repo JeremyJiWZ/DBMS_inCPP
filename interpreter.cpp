@@ -31,6 +31,7 @@ void get_attribute(string temp,SQL_CLAUSE &sql_cla)
     int start=0,end,index;
     string T,C;
     TableAttr attr;
+    attr.index=0;
     temp+=" ";
     //获得属性名
     end=temp.find(' ',start);
@@ -266,7 +267,7 @@ void create_table(string SQL,int start,SQL_CLAUSE &sql_cla)
                         for (vector<TableAttr>::iterator iter=sql_cla.attr.begin(); iter!=sql_cla.attr.end(); iter++) {
                             if (T==iter->attrName) {
                                 iter->primary=1;
-                                iter->index=1;
+                                iter->index=0;
                                 break;
                             }
                         }
@@ -591,14 +592,12 @@ bool getCond(Condition* c,string s)
     return 1;
 }
 
-
-
-void convert(struct TableHead& tableHead, struct TableAttr* tableAttr,vector<string>& info,char* insert_info)
+bool convert(struct TableHead& tableHead, struct TableAttr* tableAttr,vector<string>& info,char* insert_info)
 {
     if(tableHead.attrAmount!=info.size())
     {
         cout << "Convert Failed: wrong size" << endl;
-        return;
+        return 0;
     }
     
     stringstream ss;
@@ -611,35 +610,56 @@ void convert(struct TableHead& tableHead, struct TableAttr* tableAttr,vector<str
     {
         switch(tableAttr[i].type)
         {
-            case CTG_INT:
+            case 0:
+                for(int j=0;j<info.at(i).size();j++)
+                {
+                    if(info.at(i).at(j)<'0' || info.at(i).at(j)>'9')
+                    {
+                        cout << "attribute's type is not match" << endl;
+                        return 0;
+                    }
+                }
                 ss << info.at(i);
                 ss >> a;
                 memcpy(insert_info,&a,4);
                 insert_info = insert_info + 4;
                 break;
-            case CTG_CHAR:
-                for(int k=0;k<tableAttr[i].amount;k++)
+            case 1:
+                if((info.at(i).at(0)!='\'')||(info.at(i).at(info.at(i).size()-1)!='\''))
+                   {
+                       cout << "attribute's type is not match" << endl;
+                       return 0;
+                   }
+                   for(int k=0;k<tableAttr[i].amount;k++)
+                   {
+                       if(k<info.at(i).size()-2)
+                           insert_info[k] = info.at(i).at(k+1);
+                       else insert_info[k] = 0;
+                   }
+                   insert_info = insert_info + tableAttr[i].amount;
+                   break;
+            case 2:
+                for(int j=0;j<info.at(i).size();j++)
                 {
-                    if(k<info.at(i).size()-2)
-                        insert_info[k] = info.at(i).at(k+1);
-                    else insert_info[k] = 0;
+                    if((info.at(i).at(j)<'0' || info.at(i).at(j)>'9')&&info.at(i).at(j)!='.')
+                    {
+                        cout << "attribute's type is not match" << endl;
+                        return 0;
+                    }
                 }
-                insert_info = insert_info + tableAttr[i].amount;
-                break;
-            case CTG_FLOAT:
                 ss << info.at(i);
                 ss >> c;
                 memcpy(insert_info,&c,4);
                 insert_info = insert_info + 4;
                 break;
-            default:
+                default:
                 cout << "Convert Failed: unknown type.\n";
-                return;
+                return 0;
                 break;
         }
         ss.clear();
     }
-    
+        return 1;
 }
 void ExplainStatement(string statement,SQL_CLAUSE &x)
 {

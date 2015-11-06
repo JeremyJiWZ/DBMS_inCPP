@@ -461,7 +461,7 @@ bool BufferManager::HasFile(string DB_Name, string File_Name, int type)
         filePath=DB_Name+"\\index\\"+File_Name;
 #endif
     fp.open(filePath.c_str(),ios::in);
-    if (!fp) //文件没被打开
+    if (!fp.is_open()) //文件没被打开
         return false;
     else    //文件被打开
         fp.close();

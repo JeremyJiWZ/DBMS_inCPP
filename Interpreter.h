@@ -76,10 +76,10 @@ SQL_CLAUSE drop_database(string SQL,int start);
 SQL_CLAUSE drop_table(string SQl,int start);
 //验证drop index语句是否有效
 SQL_CLAUSE drop_index(string SQL,int start);
-
 ////
 void ExplainStatement(string SQL,SQL_CLAUSE &sql_cla);
 //
+bool convert(struct TableHead& tableHead, struct TableAttr* tableAttr,vector<string>& info,char* insert_info);
 //
 ////将表达式转化为内部形式
 //SQL_CLAUSE get_expression(string temp,string sql);

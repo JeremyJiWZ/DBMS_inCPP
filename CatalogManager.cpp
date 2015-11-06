@@ -76,7 +76,11 @@ int CatalogManager::UseDatabase(const string & DBName)//使用数据库
 		mDBName = DBName;
 		if (mFile.is_open())
 			mFile.close();
+#ifdef linux
+        mstrBuf = DBName;  mstrBuf += "/";  mstrBuf += DBName;  mstrBuf += ".cat";
+#else
 		mstrBuf = DBName;  mstrBuf += "\\";  mstrBuf += DBName;  mstrBuf += ".cat";
+#endif
 		mFile.open(mstrBuf.c_str());
 		return (mErrNum = 0);
 	}
@@ -139,7 +143,7 @@ int CatalogManager::PutTable(int Num)
 		mFile.write((char *)&mTableAttr[i].index, sizeof(char));
 		mFile.write(mTableAttr[i].indexName, MAX_NAME_LENGTH*sizeof(char));
 	}
-	
+    mFile.flush();
 	return 0;
 }
 
