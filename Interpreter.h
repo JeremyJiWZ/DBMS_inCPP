@@ -56,7 +56,7 @@ struct SQL_CLAUSE
     int condAmount;//条件数
 };
 //获取用户输入，并对输入作有效性检查，若正确，返回语句的内部表示形式
-void Interpreter(SQL_CLAUSE &sql_cla);
+void Interpreter(SQL_CLAUSE &sql_cla,string SQL);
 //读取用户输入
 string read_input();//OK
 //验证create语句是否有效

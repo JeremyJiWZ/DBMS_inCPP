@@ -506,14 +506,18 @@ void create_clause(string SQL,int start,SQL_CLAUSE &sql_cla)
     //返回create语句的内部形式
 }
 //获取用户输入，并对输入作有效性检查，若正确，返回语句的内部表示形式
-void Interpreter(SQL_CLAUSE &sql_cla)
+void Interpreter(SQL_CLAUSE &sql_cla,string SQL)
 {
-    string SQL;
     string temp;
     string sql;
     int start=0,end;
-    //获取用户输入
-    SQL=read_input();
+    if (SQL=="") {
+        //获取用户输入
+        SQL=read_input();
+    }
+    //用户从文件输入一行代码：
+    else
+        SQL=SQL;
     //获取输入的第一个单词
     while(SQL.at(start)==' ')
         start++;
@@ -581,12 +585,18 @@ vector<string> split( string str, string pattern)
 
 bool getCond(Condition* c,string s)
 {
-    if(s=="=") *c=EQUAL;
-    else if(s=="<") *c=LESS;
-    else if(s=="<=") *c=LESSEQUAL;
-    else if(s==">") *c=GREAT;
-    else if(s==">=") *c=GREATEQUAL;
-    else if(s=="!=") *c=NOTEQUAL;
+    if(s=="=")
+        *c=EQUAL;
+    else if(s=="<")
+        *c=LESS;
+    else if(s=="<=")
+        *c=LESSEQUAL;
+    else if(s==">")
+        *c=GREAT;
+    else if(s==">=")
+        *c=GREATEQUAL;
+    else if(s=="!=")
+        *c=NOTEQUAL;
     else return 0;
     
     return 1;

@@ -456,7 +456,7 @@ int BplusTree::select(string DBName, string tableName, string indexName, Value a
     blockInfo *block = BufferManager::get_file_block(DBName, indexName, INDEXFILE, 0);
     readIndexFileHeader((byte *)block->cBlock);
     blockInfo *leaf = searchInTree(rootBlock, attributeValue);
-    cout<<leaf->blockNum<<": ";
+//    cout<<leaf->blockNum<<": ";
     byte *data = (byte *)leaf->cBlock;
     short pos = findPosition(data, attributeValue);
     int fpPtr = sizeof(BLOCKHEADER)+(pos-1)*(BLOCKBYTES+attributeLen);

@@ -214,9 +214,9 @@ void RecordManager::PrintAttr(struct TableHead& tableHead, struct TableAttr* tab
 	int i;
 	for(i=0;i<tableHead.attrAmount-1;i++)
 	{
-		printf("%s\t",tableAttr[i].attrName);
+        cout << tableAttr[i].attrName << "\t";
 	}
-	printf("%s\n",tableAttr[i].attrName);
+    cout << tableAttr[i].attrName << "\n";
 }
 
 bool RecordManager::Record_IsEmpty(char* record,int rl)
@@ -296,20 +296,26 @@ void RecordManager::SelectRecord_WithIndex(string DB_name,string table_name,vect
 	offset_max = (unsigned int)ReadInt(block_zero_info->cBlock+8);
 	block_zero_info->lock=0;
 	
-	sort(offset.begin(),offset.end(),SortByM1);  //对offset排序 	
+	sort(offset.begin(),offset.end(),SortByM1);  //对offset排序
+    
+    PrintAttr(tableHead,tableAttr);
+    
+    if (offset.empty()) {
+        return;
+    }
+    
 	if(offset.back()>=offset_max)
 	{
 		cout << "Select Record Failed: unexisted offset.\n";
 		return;
-	}	
-	
-	PrintAttr(tableHead,tableAttr);	
+	}
 
 	for(int i=0;i<offset.size();i++)
 	{
 		if(offset.at(i)>=block_no*br)
 		{
-			block_info->lock=0;
+            if(block_info!=NULL)
+               block_info->lock=0;
 			block_no = (offset.at(i)/br)+1;
 			block_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,block_no);
 			block_info->lock=1;
@@ -561,4 +567,88 @@ void RecordManager::DeleteRecord_All(string DB_name,string table_name)
 	block_zero_info->dirtyBlock=1; 
 	
 	printf("Delete Operation Succeed.\n");
+}
+
+
+void RecordManager::getValue(char* record,struct TableHead& tableHead, struct TableAttr* tableAttr,string attr_name,vector<Value>& v)
+{
+    
+    for(int i=0;i<tableHead.attrAmount;i++)
+    {
+        if(attr_name==tableAttr[i].attrName)
+        {
+            Value tmp;
+            switch(tableAttr[i].type)
+            {
+                case 0:
+                    tmp.setInt(ReadInt(record));
+                    break;
+                case 1:
+                    tmp.setString(ReadString(record,tableAttr[i].amount));
+                    break;
+                case 2:
+                    tmp.setFloat(ReadFloat(record));
+                    break;
+                default:
+                    cout << "Get Value: unknown type.\n";
+                    return;
+                    break;
+            }
+            v.push_back(tmp);
+        }
+        else
+        {
+            if(tableAttr[i].type == 1)
+                record = record + tableAttr[i].amount;
+            else record = record + 4;
+        }
+    }
+    
+}
+
+void RecordManager::GetAttrValue(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr,string atrr_name,vector<unsigned int>& offset,vector<Value>& v)
+{
+    block_zero_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,0);
+    block_zero_info->lock=1;
+    br = (unsigned int)ReadInt(block_zero_info->cBlock);
+    rl = (unsigned int)ReadInt(block_zero_info->cBlock+4);
+    offset_max = (unsigned int)ReadInt(block_zero_info->cBlock+8);
+    block_zero_info->lock=0;
+    
+    if(offset_max==0)  return;
+    
+    for(block_no=1;block_no<(offset_max-1)/br+1;block_no++)
+    {
+        block_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,block_no);
+        block_info->lock=1;
+        for(int i=0;i<br*rl;i=i+rl)
+        {
+            if(Record_IsEmpty(block_info->cBlock+i,rl))
+            {
+                continue;
+            }
+            else
+            {
+                offset.push_back((block_no-1)*br+i/rl);
+                getValue(block_info->cBlock+i,tableHead,tableAttr,atrr_name,v);
+            }
+        }
+        block_info->lock=0;
+    }
+    
+    block_info = BufferManager::get_file_block(DB_name,table_name,DATAFILE,block_no);//最后一个块的扫描
+    block_info->lock=1;
+    for(int i=0;i<=((offset_max-1)%br)*rl;i=i+rl)
+    {
+        if(Record_IsEmpty(block_info->cBlock+i,rl))
+        {
+            continue;
+        }
+        else
+        {
+            offset.push_back((block_no-1)*br+i/rl);
+            getValue(block_info->cBlock+i,tableHead,tableAttr,atrr_name,v);
+        }
+    }
+    block_info->lock=0;
 }

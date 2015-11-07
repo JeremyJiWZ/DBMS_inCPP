@@ -44,6 +44,7 @@ private:
 	float ReadFloat(char* location);//ok
 	string cstr_to_string( char* ctr);//ok 
 	bool Record_IsEmpty(char* record,int rl);//ok
+    void getValue(char* record,struct TableHead& tableHead, struct TableAttr* tableAttr,string attr_name,vector<Value>& v);
 	 
 public:
 	RecordManager(){};//ok
@@ -58,6 +59,7 @@ public:
 	void DeleteRecord_WithIndex(string DB_name,string table_name,vector<unsigned int>& offset);//ok 
 	void DeleteRecord_WithoutIndex(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr,Value* attributeValue,Condition* cond,const int CondNum);//ok
 	void DeleteRecord_All(string DB_name,string table_name);
+    void GetAttrValue(string DB_name,string table_name,struct TableHead& tableHead, struct TableAttr* tableAttr,string atrr_name,vector<unsigned int>& offset,vector<Value>& v);
 	
 };
 

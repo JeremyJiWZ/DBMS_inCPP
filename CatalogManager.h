@@ -83,6 +83,7 @@ public:
 	int IsAttrInTable(const string & tableName, const string & attrName, int & ret);//存在返ret为1，不存在ret为0
 	int GetAttrType(const string & tableName, const string & attrName, int & type);//返回的类型保存在type中
 	int GetAttrType(const string & tableName, int num, int & type);//返回的类型保存在type中
+    int GetAttrLen(const string & tableName, const string & attrName, int & len);
 	//int IsAttrType(const string & tableName, const string & attrName, int type, int & ret);//相同返回0
 	//int GetAttrByte(const string & tableName, int num, int & bytes);
 	//int GetAllAttrByte(const string & tableName, int & bytes);

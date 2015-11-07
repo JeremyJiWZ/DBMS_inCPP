@@ -52,7 +52,7 @@ int IndexManager::create(string DBName, string tableName, string indexName, int 
     vector<int>::iterator offsetItor = recordOffsets.begin();
     int count = 0;
     while (valueItor!=attributeValues.end() && offsetItor!=recordOffsets.end()) {
-        cout<<(*valueItor).intValue<<":"<<(*offsetItor)<<"  "<<count<<endl;
+//        cout<<(*valueItor).intValue<<":"<<(*offsetItor)<<"  "<<count<<endl;
         insertInto(DBName, tableName, indexName, *valueItor, *offsetItor);
         valueItor++;
         offsetItor++;

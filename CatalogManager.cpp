@@ -339,36 +339,42 @@ int CatalogManager::IsAttrInTable(const string & tableName, const string & attrN
 
 int CatalogManager::GetAttrType(const string & tableName, const string & attrName, int & type)
 {
-	int i;
-	
-	if (mErrNum = CheckUseDB())
-		return mErrNum;
-	GetTableByName(tableName);
-	if (mErrNum != 0) return mErrNum;
-		
-	for (i=0; i<mTableHead.attrAmount; i++)
-	{
-		if (strcmp(mTableAttr[i].attrName, attrName.c_str()) == 0)
-		{
-			type = mTableAttr[i].type;
-			return (mErrNum = 0);
-		}
-	}
-	return (mErrNum = 7);
+    int i;
+    
+    if (mErrNum = CheckUseDB())
+        return mErrNum;
+    GetTableByName(tableName);
+    if (mErrNum != 0) return mErrNum;
+    
+    for (i=0; i<mTableHead.attrAmount; i++)
+    {
+        if (strcmp(mTableAttr[i].attrName, attrName.c_str()) == 0)
+        {
+            type = mTableAttr[i].type;
+            return (mErrNum = 0);
+        }
+    }
+    return (mErrNum = 7);
 }//返回的类型保存在type中
 
-int CatalogManager::GetAttrType(const string & tableName, int num, int & type)
+int CatalogManager::GetAttrLen(const string & tableName, const string & attrName, int & len)
 {
-	if (mErrNum = CheckUseDB())
-		return mErrNum;
-	GetTableByName(tableName);
-	if (mErrNum != 0) return mErrNum;
-		
-	if (num >= mTableHead.attrAmount)
-		return (mErrNum = 6);
-		
-	type = mTableAttr[num].type;
-	return (mErrNum = 0);
+    int i;
+    
+    if (mErrNum = CheckUseDB())
+        return mErrNum;
+    GetTableByName(tableName);
+    if (mErrNum != 0) return mErrNum;
+    
+    for (i=0; i<mTableHead.attrAmount; i++)
+    {
+        if (strcmp(mTableAttr[i].attrName, attrName.c_str()) == 0)
+        {
+            len = mTableAttr[i].amount;
+            return (mErrNum = 0);
+        }
+    }
+    return (mErrNum = 7);
 }//返回的类型保存在type中
 
 
@@ -537,7 +543,7 @@ int CatalogManager::GetIndexName(const string & tableName, const string & attrNa
 	GetTableByName(tableName);
 	if (mErrNum != 0) return mErrNum;
 		
-	for (i=0; i<mTableHead.attrAmount; i++)
+	for (int i=0; i<mTableHead.attrAmount; i++)
 	{
 		if (mTableAttr[i].attrName == attrName)
 		{

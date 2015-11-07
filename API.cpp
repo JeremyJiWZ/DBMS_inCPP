@@ -3,6 +3,7 @@
 #include "Interpreter.h"
 #include "RecordManager.h"
 #include "CatalogManager.h"
+#include <fstream>
 using namespace std;
 
 void API()
@@ -12,9 +13,6 @@ void API()
     TableAttr x_att[32];
     Value x_v[20];
     Condition x_cond[20];
-    x.att = x_att;
-    x.v = x_v;
-    x.cond = x_cond;
 	
 	TableHead table_head;
 	TableAttr table_attr[20];
@@ -24,30 +22,32 @@ void API()
 	string Index_name;
 	IndexManager indexmanager; 
 	RecordManager recordmanager;
+    fstream fp;
 	
 	vector<Value> attriValue;
 	vector<int> offset;
+    int executeFile=0;
+    string SQL;
     
 	while(1)
 	{
-		
+        
 		cout << "Please input statement:" << endl;
-        x.att=x_att;
-		Interpreter(x);
-		
-/*		
-				
-		if(DB_name.empty())
-		{
-			cout << "Please Use DB" << endl;
-
-			continue;
-		}
-*/	
-
-	
-		
-
+        x.att = x_att;
+        x.v = x_v;
+        x.cond = x_cond;
+        if (executeFile) {
+            getline(fp,SQL);
+            if (fp.eof()) {
+                executeFile=0;
+                continue;
+            }
+            Interpreter(x, SQL);
+        }
+        else{
+            SQL="";
+            Interpreter(x,SQL);
+        }
 		switch(x.type)
 		{
 			case CREATEDATABASE:
@@ -83,9 +83,11 @@ void API()
                     
                     struct TableHead tmp;
                     tmp.valid= 1;
-                    for (int j=0; j<x.name.length(); j++) {
+                    int j;
+                    for (j=0; j<x.name.length(); j++) {
                         tmp.tableName[j]=x.name[j];
                     }
+                    tmp.tableName[j]=0;
                     tmp.attrAmount = x.attrAmount;
                     tmp.recordAmount = 0;
                     
@@ -105,35 +107,55 @@ void API()
                             attriValue.clear();
                             offset.clear();
                             string attrname = x.att[i].attrName;
-                            Index_name = DB_name + x.name + attrname;						
-                            indexmanager.create(DB_name,x.name,Index_name,attramount,(int)x.att[i].type,attriValue,offset);
+                            Index_name = DB_name + x.name + attrname;
+                            
+                            if(x.att[i].type==1)
+                                indexmanager.create(DB_name,x.name,Index_name,x.attrAmount,(int)x.att[i].type,attriValue,offset);
+                            else
+                                indexmanager.create(DB_name,x.name,Index_name,4,(int)x.att[i].type,attriValue,offset);
+                            
+                            
                             catl->CreateIndex(x.name,attrname,Index_name);
                         }				 		 
                     }
                 }
                 break;
-		/*	case CREATEINDEX:
-				if( recordmanager.DataExist(DB_name,x.name) )
-				{
-					cout << "table ≤ª¥Ê‘⁄" <<°° endl;
-					break;
-				}
-				else
-				{
-					
-				 	if(catl->CreateIndex(x.tableName,x.attrName,x.name))
-					{
-						cout << catl->GetErrMsg() << endl;
-						break;
-					}
-					
-					for()
-					{
-						ªÒµ√±Ì¿Ô√ÊÀ˘”–Ãıƒøµƒoffset∫Õ∂‘”¶ Ù–‘µƒ÷µ		
-					}
-				 	indexmanager.create(DB_name,x.name,index_name,catalog.getattributbytes(),attriValue,offset);
-				}
-				break;*/
+            case CREATEINDEX:
+                if( !recordmanager.DataExist(DB_name,x.tableName) )
+                {
+                    cout << "table does not exist" << endl;
+                    break;
+                }
+                else
+                {
+                    catl->GetTableStruct(x.tableName,table_head,table_attr);
+                    if(catl->CreateIndex(x.tableName,x.attrName,x.name))
+                    {
+                        cout << catl->GetErrMsg() << endl;
+                        break;
+                    }
+                    offset.clear();
+                    attriValue.clear();
+                    vector<unsigned int> uoffset;
+                    recordmanager.GetAttrValue(DB_name,x.tableName,table_head,table_attr,x.attrName,uoffset,attriValue);
+                    
+                    vector<unsigned int>::iterator i;
+                    for (i=uoffset.begin(); i!=uoffset.end(); i++) {
+                        offset.push_back((int)(*i));
+                    }
+                    int type;
+                    int len;
+                    catl->GetAttrType(x.tableName, x.attrName, type);
+                    catl->GetAttrLen(x.tableName, x.attrName, len);
+                    
+                    
+                    if(type==1)
+                        indexmanager.create(DB_name,x.tableName,x.name,len,type,attriValue,offset);
+                    else
+                        indexmanager.create(DB_name,x.tableName,x.name,4,type,attriValue,offset);
+
+                }
+                break;
 			case DROPDATABASE:
 				BufferManager::quitProg(x.name);
 				if(catl->DropDatabase(x.name))
@@ -230,87 +252,23 @@ void API()
                  }
             break;
                 
-             /*
+             
 			case DROPINDEX:
-				if(!recordmanager.DataExist((DB_name,x.tableName)))
-				{
-					cout << "table ≤ª¥Ê‘⁄" << endl;
-					break;
-				}
-				 else
-				{
-					catl->IsAttrInTable(x.tableName,x.attrName,flag);
-				 	if(flag==0)
-					{
-						cout << " Ù–‘ ≤ª¥Ê‘⁄" << endl;
-						break;
-					} 
-					if(catl->GetIndexName(x.tableName,x.attrName,Index_name))
-					{
-						cout << catl->GetErrMsg() << endl;
-						break;
-					} 
-				 	indexmanager.drop(DB_name,x.name,Index_name);
-				 	catl->DropIndex(Index_name);
-				 }
-				break;			
-                 case SELECT:	
-				if(x.correct==0)
-                 {
-                 cout << "Wrong Statement" << endl;
-                 break;
-                 }
-                 if(!recordmanager.DataExist((DB_name,x.name)))
-                 {
-                 cout << "table 不存在" << endl;
-                 break;
-                 }
-                 
-                 catl->GetTableStruct(x.name,table_head,table_attr);
-                 
-                 if(x.condAmount==0)
-                 {
-                 recordmanager.SelectRecord_All(DB_name,x.name,table_head,table_attr);
-                 }
-                 else
-                 {
-                 flag = 1;
-                 string value_name = x.v.at(0).ValueName;
-                 for(int i=0;i<x.condAmount;i++)
-                 {
-                 //检查每个value.valuename是否在该table的属性中，不存在就报错
-                 catl->IsAttrInTable(x.name,x.v.at(i).ValueName,flag);
-                 
-                 if(flag==0||x.v.at(i).ValueName!=vaule_name) //同时检查属性是否是一个
-                 {
-                 flag = 0;
-                 break;
-                 }
-                 }
-                 if(x.condAmount>1) flag = 0;
-                 if(flag == 1)
-                 {
-                 if(catl->GetIndexName(x.name,value_name,Index_name))
-                 flag = 0;
-                 } 
-                 if(flag == 1)
-                 {
-                 offset.clear();
-                 //调用index 返回offset
-                 indexmanager.select(DB_name,x.name,Index_name,x.v[0],cond[0],offset);
-                 //调用 recordmanager_withindex 
-                 recordmanager.SelectRecord_WithIndex(DB_name,x.name,offset,table_head,table_attr);
-                 }
-                 else recordmanager.SelectRecord_WithoutIndex(DB_name,x.name,table_head,table_attr,x.v,x.cond,x.condAmount);					
-                 }
-                 break;
+                Index_name = x.name;
+                if(catl->DropIndex(Index_name))
+                {
+                    cout << catl->GetErrMsg() << endl;
+                    break;
+                }
+                indexmanager.drop(DB_name,x.tableName,Index_name);
+				break;
 			case DELETE:
 				if(x.correct==0)
 				{
 					cout << "Wrong Statement" << endl;
 					break;
 				}
-				if(!recordmanager.DataExist((DB_name,x.tableName)))
+				if(!recordmanager.DataExist(DB_name,x.tableName))
 				{
 					cout << "table ≤ª¥Ê‘⁄" << endl;
 					break;
@@ -324,13 +282,13 @@ void API()
 				}
 				else
 				{					
-					bool flag = 1;
-					string value_name = x.v.at(0).ValueName;
+					flag = 1;
+					string value_name = x.v[0].ValueName;
 					for(int i=0;i<x.condAmount;i++)
 					{
 						//ºÏ≤È√ø∏ˆvalue.valuename «∑Ò‘⁄∏√tableµƒ Ù–‘÷–£¨≤ª¥Ê‘⁄æÕ±®¥Ì 
-						catl->IsAttrInTable(x.name,x.v.at(i).ValueName,flag);						
-						if(flag==0||x.v.at(i).ValueName!=vaule_name) //Õ¨ ±ºÏ≤È Ù–‘ «∑Ò «“ª∏ˆ 
+						catl->IsAttrInTable(x.name,x.v[i].ValueName,flag);
+						if(flag==0||x.v[i].ValueName!=value_name) //Õ¨ ±ºÏ≤È Ù–‘ «∑Ò «“ª∏ˆ
 						{
 							flag = 0;
 							break; 
@@ -344,15 +302,22 @@ void API()
 					if(flag == 1)
 					{
 						//µ˜”√index ∑µªÿoffset
-						indexmanager.select(DB_name,x.name,Index_name,x.v[0],cond[0],offset);
-						recordmanager.DeleteRecord_WithIndex(DB_name,x.name,offset);
+						indexmanager.select(DB_name,x.name,Index_name,x.v[0],x.cond[0],offset);
+                        
+                        vector<unsigned int> uoffset;
+                        vector<int>::iterator i;
+                        for (i=offset.begin(); i!=offset.end(); i++) {
+                            uoffset.push_back((unsigned int)(*i));
+                        }
+                        
+						recordmanager.DeleteRecord_WithIndex(DB_name,x.name,uoffset);
 						
-						indexmanager.deleteFrom(DB_name,x.name,Index_name,v[0]);
+						indexmanager.deleteFrom(DB_name,x.name,Index_name,x.v[0]);
 
 					}
 					else recordmanager.DeleteRecord_WithoutIndex(DB_name,x.name,table_head,table_attr,x.v,x.cond,x.condAmount);					
 				}
-				break;*/
+				break;
             case INSERT:
                 if(x.correct==0)
                  {
@@ -402,7 +367,7 @@ void API()
                                  return ;
                                 break;
                          }
-                         if(catl->GetIndexName(x.name,i,Index_name))
+                         if(!catl->GetIndexName(x.name,i,Index_name))
                              indexmanager.insertInto(DB_name,x.name,Index_name,d,insert_offset);
                      }
                  }
@@ -418,6 +383,12 @@ void API()
                     DB_name = x.name;
 				break;
 			case EXECFILE:
+                fp.open(x.name,ios::beg|ios::in);
+                if (!fp.is_open()) {
+                    cout<<"file does not exist!!"<<endl;
+                    break;
+                }
+                executeFile=1;
 				break;
 			case QUIT:
 				BufferManager::quitProg(DB_name);//πÿ±’ ˝æ›ø‚
@@ -426,7 +397,9 @@ void API()
                 return;
 				break;
 			case HELP:
-//				¥Ú”°∞Ô÷˙–≈œ¢; 
+                cout<<"========================================"<<endl;
+                cout<<"welcome to MINISQL v1.0!!"<<endl;
+                cout<<"========================================"<<endl;
 				break;
 			default:
 				cout << "Wrong Explain" << endl;
